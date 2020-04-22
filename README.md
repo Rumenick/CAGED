@@ -1,2 +1,2 @@
 # CAGED
-Pacote do R para baixa os dados do CAGED
+Pacote do R para baixar os dados do CAGED
