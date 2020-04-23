@@ -70,15 +70,24 @@ read_CAGED <- function(month = "12", year = "2019") {
   # dir.create(td, recursive = TRUE)
   td <- tempdir()
   check_erro1 <- TRUE
-  check_erro2 <- TRUE
-  while (check_erro1 | check_erro2) {
+  k <- 0L
+  while (check_erro1) {
+    k <- k + 1L
     info_download <- download_CAGED(m = month, y = year, dir.output = td)
     check_erro1 <- info_download$check_erro
-    check_erro2 <- tryCatch(info_un7z <- suppressMessages(un7z(zipfile = info_download$dir_file, dir.output = td)),
-                            error = function(e) TRUE, finally = FALSE)
+    if (k == 3L) {
+      stop("\n Erro ao realizar download do arquivo! \n")
+    }
+  }
+  
+  info_un7z <- un7z(zipfile = info_download$dir_file, dir.output = td)
+  
+  if(info_un7z) {
+    stop("\n Erro ao descomprimir arquivo 7zip! \n")
   }
   
   file_txt <- gsub(pattern = ".7z", replacement = ".txt", x = info_download$dir_file)
+  
   data_CAGED <-
     data.table::fread(file = file_txt,
                       sep = ";",

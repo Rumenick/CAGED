@@ -39,9 +39,15 @@
 #'
 #' @export
 un7z <- function(zipfile, dir.output = ".") {
+  
+  if(system("7z", show.output.on.console = FALSE)) {
+    stop("Install 7zip (download in https://www.7-zip.org/download.html)")
+  }
+
   if (!is.character(zipfile) || length(zipfile) != 1L) {
     stop("'un7z' must be a single character string")
   }
+  
   if (.Platform$OS.type != "windows") {
     dir.output <- path.expand(dir.output)
     zipfile    <- path.expand(zipfile)
@@ -50,12 +56,8 @@ un7z <- function(zipfile, dir.output = ".") {
     zipfile    <- gsub(pattern = "/", replacement = "\\", x = path.expand(zipfile), fixed = TRUE)
   }
 
-  check_error <- tryCatch(system(sprintf('7z e -o%s %s', dir.output, zipfile)),
+  check_error <- tryCatch(system(sprintf('7z e -o%s %s', dir.output, zipfile), show.output.on.console = FALSE),
                           error = function(e) { TRUE },
                           finally = FALSE)
-
-  if (check_error) {
-    stop("Install 7zip (download in https://www.7-zip.org/download.html)")
-  }
   return(check_error)
 }
