@@ -1,20 +1,63 @@
-#' @importFrom RCurl url.exists
+#' @title Verifica alterações nas pastas do repositório dos dados do CAGED
 #' 
-update_CAGED <- function(m = "12", y = "2019") {
+#' @noRd
+#' 
+#' @import dplyr
+#' @importFrom RCurl getURL
+repository_update_CAGED <- function() {
+  url_path <- "ftp://ftp.mtps.gov.br/pdet/microdados/CAGED/"
+  RCurl::getURL(url_path) %>% 
+    strsplit(., "\n") %>% 
+    {
+      .[[1]] %>% 
+        strsplit(x = ., split = "<DIR>") %>% 
+        lapply(X = ., 
+               FUN = function(x) {dplyr::data_frame(dir_name = suppressWarnings(as.numeric(x[2])), 
+                                                    date_update = as.Date(x[1], tryFormats = c("%m-%d-%y")))}) %>% 
+        dplyr::bind_rows() %>% 
+        na.omit() %>% 
+        dplyr::mutate(url_path = paste0(url_path, dir_name))
+    }
+}
+
+
+#' @title Verifica se os dados e/ou endereço estão disponíveis
+#' 
+#' @name avaliable_CAGED
+#' 
+#' @param m Mês do ano qual deseja verificar os dados, deve ser especificado como caracter com dois dígitos,
+#'  ex.: "01" (mês de janeiro).
+#'
+#' @param y Ano qual deseja verificar os dados, deve ser especificado como caracter, ex.: "2019".
+#' 
+#' @noRd
+#'  
+#'@importFrom RCurl url.exists
+available_CAGED <- function(m = "12", y = "2019") {
   url_path <- "ftp://ftp.mtps.gov.br/pdet/microdados/CAGED"
   url_file <- file.path(url_path, y, paste0("CAGEDEST_", m, y, ".7z"))
   check_file <- RCurl::url.exists(url_file)
   if(check_file) {
     cat("\n Dados e endereço disponível! Ref.:", paste(m, y, sep = "/"), "\n")
   } else {
-    cat("\n Dados ou endereço indisponível! Ref.:", paste(m, y, sep = "/"), "\n")
+    cat("\n Dados ou endereço INDISPONÍVEL! Ref.:", paste(m, y, sep = "/"), "\n")
   }
   invisible(check_file)
 }
 
-#' @import dplyr
+#' @title Dado um período de tempo verifica a disponibilidade dos dados e/ou endereço até a data atual
 #' 
-check_update_CAGED <- function(last.y = "2007", last.m = "01") {
+#' @name available_update_CAGED
+#' 
+#' @param last.m mês do ano inicial qual deseja verificar disponibilidade dos dados e/ou endereço.
+#' 
+#' @param last.y ano inicial qual deseja verificar disponibilidade dos dados e/ou endereço.
+#' 
+#' 
+#' @details função usada para gerar o arquivo metadata do CAGED. O arquido pode ser acessato usando data(metadata)
+#' 
+#' @noRd
+available_update_CAGED <- function(last.m = "01", last.y = "2007") {
   data_current <- Sys.Date() 
   current_y <-  format(data_current, "%Y")
   current_m <-  format(data_current, "%m")
@@ -23,13 +66,13 @@ check_update_CAGED <- function(last.y = "2007", last.m = "01") {
   if(last_aux <= current_aux) {
     metadata_CAGED <- 
       base::expand.grid(month = c(paste0("0", 1:9), 10:12), year = as.integer(last.y):2020) %>%
-      dplyr::as_data_frame() %>% 
+      dplyr::as_tibble() %>% 
       dplyr::filter(dplyr::between(x = as.numeric(paste(year, month, sep = ".")),
                                    left = last_aux, 
                                    right = current_aux)) %>% 
       dplyr::group_by(year, month) %>% 
       dplyr::mutate(date = Sys.Date(), 
-                    available = update_CAGED(m = month, y = year), 
+                    available = available_CAGED(m = month, y = year), 
                     description = dplyr::if_else(available, 
                                                  "Dados e endereço disponível!", 
                                                  "Dados ou endereço indisponível!"))
@@ -37,7 +80,6 @@ check_update_CAGED <- function(last.y = "2007", last.m = "01") {
     stop("Last date (month/year) greater current date (today)")
   }
 } 
-
 
 
 #' @importFrom utils download.file
@@ -50,7 +92,7 @@ download_CAGED <- function(m = "12", y = "2019", dir.output = ".") {
   url_file <- file.path(url_path, y, paste0("CAGEDEST_", m, y, ".7z"))
   dir_file <- file.path(dir.output, paste("CAGEDEST_", m, y, ".7z", sep = ""))
   
-  check_file <- update_CAGED(m, y)
+  check_file <- available_CAGED(m, y)
   if (check_file) {
     utils::download.file(url = url_file, destfile = dir_file, mode = "wb")
   } else {
@@ -110,7 +152,7 @@ read_CAGED <- function(month = "12", year = "2019") {
   # create temporary directory
   td <- tempdir()
   
-  # download 7zip file
+  # download 7zip file:
   info_download <- download_CAGED(m = month, y = year, dir.output = td)
   
   # Extract file form 7zip archive:
