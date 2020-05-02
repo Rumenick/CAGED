@@ -59,5 +59,9 @@ un7z <- function(zipfile, dir.output = ".") {
   check_error <- tryCatch(system(sprintf('7z e -o%s %s', dir.output, zipfile), show.output.on.console = FALSE),
                           error = function(e) { TRUE },
                           finally = FALSE)
-  return(check_error)
+  if(check_error) {
+    stop("\n Erro ao descomprimir arquivo 7zip! \n")
+  }
+  
+  invisible(NULL)
 }

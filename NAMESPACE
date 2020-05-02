@@ -2,5 +2,7 @@
 
 export(read_CAGED)
 export(un7z)
+import(dplyr)
+importFrom(RCurl,url.exists)
 importFrom(data.table,fread)
 importFrom(utils,download.file)

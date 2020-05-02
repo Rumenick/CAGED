@@ -1,3 +1,45 @@
+#' @importFrom RCurl url.exists
+#' 
+update_CAGED <- function(m = "12", y = "2019") {
+  url_path <- "ftp://ftp.mtps.gov.br/pdet/microdados/CAGED"
+  url_file <- file.path(url_path, y, paste0("CAGEDEST_", m, y, ".7z"))
+  check_file <- RCurl::url.exists(url_file)
+  if(check_file) {
+    cat("\n Dados e endereço disponível! Ref.:", paste(m, y, sep = "/"), "\n")
+  } else {
+    cat("\n Dados ou endereço indisponível! Ref.:", paste(m, y, sep = "/"), "\n")
+  }
+  invisible(check_file)
+}
+
+#' @import dplyr
+#' 
+check_update_CAGED <- function(last.y = "2007", last.m = "01") {
+  data_current <- Sys.Date() 
+  current_y <-  format(data_current, "%Y")
+  current_m <-  format(data_current, "%m")
+  last_aux <- as.numeric(paste(last.y, last.m, sep = "."))
+  current_aux <- as.numeric(paste(current_y, current_m, sep = "."))
+  if(last_aux <= current_aux) {
+    metadata_CAGED <- 
+      base::expand.grid(month = c(paste0("0", 1:9), 10:12), year = as.integer(last.y):2020) %>%
+      dplyr::as_data_frame() %>% 
+      dplyr::filter(dplyr::between(x = as.numeric(paste(year, month, sep = ".")),
+                                   left = last_aux, 
+                                   right = current_aux)) %>% 
+      dplyr::group_by(year, month) %>% 
+      dplyr::mutate(date = Sys.Date(), 
+                    available = update_CAGED(m = month, y = year), 
+                    description = dplyr::if_else(available, 
+                                                 "Dados e endereço disponível!", 
+                                                 "Dados ou endereço indisponível!"))
+  } else {
+    stop("Last date (month/year) greater current date (today)")
+  }
+} 
+
+
+
 #' @importFrom utils download.file
 #'
 download_CAGED <- function(m = "12", y = "2019", dir.output = ".") {
@@ -7,13 +49,17 @@ download_CAGED <- function(m = "12", y = "2019", dir.output = ".") {
   url_path <- "ftp://ftp.mtps.gov.br/pdet/microdados/CAGED"
   url_file <- file.path(url_path, y, paste0("CAGEDEST_", m, y, ".7z"))
   dir_file <- file.path(dir.output, paste("CAGEDEST_", m, y, ".7z", sep = ""))
-  check_erro <- tryCatch(utils::download.file(url = url_file, destfile = dir_file, mode = "wb"),
-                         error = function(e) { TRUE },
-                         finally = FALSE)
-  return(list(check_erro = check_erro,
-              dir_file   = dir_file))
+  
+  check_file <- update_CAGED(m, y)
+  if (check_file) {
+    utils::download.file(url = url_file, destfile = dir_file, mode = "wb")
+  } else {
+    stop("\n Erro ao realizar download do arquivo! \n")
+  }
+  
+  invisible(list(check_file = check_file,
+                 dir_file   = dir_file))
 }
-
 
 
 #' @title Importar dados do CAGED
@@ -23,7 +69,6 @@ download_CAGED <- function(m = "12", y = "2019", dir.output = ".") {
 #' @description Função para leitura dos dados do Cadastro Geral de Empregados e Desempregados
 #' (CAGED) do governo federal do Brasil.
 #'
-#' @importFrom data.table fread
 #'
 #' @param month Mês do ano qual deseja os dados, deve ser especificado como caracter com dois dígitos,
 #'  ex.: "01" (mês de janeiro).
@@ -58,36 +103,21 @@ download_CAGED <- function(m = "12", y = "2019", dir.output = ".") {
 #' # CAGED_list <- mapply(FUN = function(m, y) {read_CAGED(month = m, year = y)},
 #' #                     m = configs$meses, y = configs$anos)
 #' # dplyr::bind_rows(CAGED_list) # Juntar todos os dados
-#'
+#' 
+#' @importFrom data.table fread
 #' @export
 read_CAGED <- function(month = "12", year = "2019") {
-  # create temporary items
-  # tf <- tempfile()
-  # td <- path.expand(file.path(".", "temp", paste0(sample(c(letters, LETTERS), size = 10), collapse = "")))
-  # while(dir.exists(td)) {
-  #   td <- path.expand(file.path(".", "temp", paste0(sample(c(letters, LETTERS), size = 10), collapse = "")))
-  # }
-  # dir.create(td, recursive = TRUE)
+  # create temporary directory
   td <- tempdir()
-  check_erro1 <- TRUE
-  k <- 0L
-  while (check_erro1) {
-    k <- k + 1L
-    info_download <- download_CAGED(m = month, y = year, dir.output = td)
-    check_erro1 <- info_download$check_erro
-    if (k == 3L) {
-      stop("\n Erro ao realizar download do arquivo! \n")
-    }
-  }
   
+  # download 7zip file
+  info_download <- download_CAGED(m = month, y = year, dir.output = td)
+  
+  # Extract file form 7zip archive:
   info_un7z <- un7z(zipfile = info_download$dir_file, dir.output = td)
   
-  if(info_un7z) {
-    stop("\n Erro ao descomprimir arquivo 7zip! \n")
-  }
-  
+  # Read data CAGED for month/year:
   file_txt <- gsub(pattern = ".7z", replacement = ".txt", x = info_download$dir_file)
-  
   data_CAGED <-
     data.table::fread(file = file_txt,
                       sep = ";",
