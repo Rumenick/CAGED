@@ -1,9 +1,33 @@
-#' @title Verifica alterações nas pastas do repositório dos dados do CAGED
+#' @title Verifica alterações nas pastas de dados do repositório do CAGED
 #' 
-#' @noRd
+#' @description Acessa a ftp onde está disponível os dados do CAGED e retorna metadados das pastas de dados 
+#' do reposítorio.
+#' 
+#' @return Um conjunto de dados contendo as seguintes colunas:
+#' 
+#' \item{url_path }{
+#' link do diretório que estou verificando alterações no repositório;
+#' }
+#' \item{dir_name }{
+#' nome do diretório (ano de referência dos dados);
+#' }
+#' \item{date_update }{
+#' data da última alteração em pelos um dos arquivos do diretório;
+#' }
+#' \item{date_check }{
+#' data da verificação.
+#' }
+#' 
+#' @references
+#' ftp://ftp.mtps.gov.br/pdet/microdados/CAGED
+#' 
+#' @example 
+#' # Execute:
+#' # repository_update_CAGED()
 #' 
 #' @import dplyr
 #' @importFrom RCurl getURL
+#' @export
 repository_update_CAGED <- function() {
   url_path <- "ftp://ftp.mtps.gov.br/pdet/microdados/CAGED/"
   RCurl::getURL(url_path) %>% 
@@ -12,11 +36,13 @@ repository_update_CAGED <- function() {
       .[[1]] %>% 
         strsplit(x = ., split = "<DIR>") %>% 
         lapply(X = ., 
-               FUN = function(x) {dplyr::data_frame(dir_name = suppressWarnings(as.numeric(x[2])), 
-                                                    date_update = as.Date(x[1], tryFormats = c("%m-%d-%y")))}) %>% 
+               FUN = function(x) {dplyr::tibble("name_path" = suppressWarnings(as.numeric(x[2])), 
+                                                "date_update" = as.Date(x[1], tryFormats = c("%m-%d-%y")))}) %>% 
         dplyr::bind_rows() %>% 
-        na.omit() %>% 
-        dplyr::mutate(url_path = paste0(url_path, dir_name))
+        dplyr::filter(!is.na(`name_path`)) %>% 
+        dplyr::mutate("url_path" = paste0(`url_path`, `name_path`),
+                      "date_check" = Sys.Date()) %>% 
+        dplyr::select(`url_path`, `name_path`, `date_update`, `date_check`)
     }
 }
 
@@ -25,14 +51,14 @@ repository_update_CAGED <- function() {
 #' 
 #' @name avaliable_CAGED
 #' 
-#' @param m Mês do ano qual deseja verificar os dados, deve ser especificado como caracter com dois dígitos,
+#' @param m Mês do ano qual deseja verificar os dados, deve ser especificado como string com dois dígitos,
 #'  ex.: "01" (mês de janeiro).
 #'
-#' @param y Ano qual deseja verificar os dados, deve ser especificado como caracter, ex.: "2019".
+#' @param y Ano qual deseja verificar os dados, deve ser especificado como string, ex.: "2019".
 #' 
 #' @noRd
 #'  
-#'@importFrom RCurl url.exists
+#' @importFrom RCurl url.exists
 available_CAGED <- function(m = "12", y = "2019") {
   url_path <- "ftp://ftp.mtps.gov.br/pdet/microdados/CAGED"
   url_file <- file.path(url_path, y, paste0("CAGEDEST_", m, y, ".7z"))
@@ -40,23 +66,43 @@ available_CAGED <- function(m = "12", y = "2019") {
   if(check_file) {
     cat("\n Dados e endereço disponível! Ref.:", paste(m, y, sep = "/"), "\n")
   } else {
-    cat("\n Dados ou endereço INDISPONÍVEL! Ref.:", paste(m, y, sep = "/"), "\n")
+    cat("\n Dados OU endereço INDISPONÍVEL! Mês/Ano:", paste(m, y, sep = "/"), "\n")
   }
   invisible(check_file)
 }
 
-#' @title Dado um período de tempo verifica a disponibilidade dos dados e/ou endereço até a data atual
+#' @title Dado uma data inicial verifica-se a disponibilidade dos dados e/ou endereço até a data atual
+#' 
+#' @description Permite avaliar a disponibilidade dos dados e/ou endereço para todos os meses e anos no
+#' período compreendido entre uma data incial até a data atual.
 #' 
 #' @name available_update_CAGED
 #' 
-#' @param last.m mês do ano inicial qual deseja verificar disponibilidade dos dados e/ou endereço.
+#' @param last.m,last.y  mês e ano para formar a data inicial, ex.: "12/2019".
 #' 
-#' @param last.y ano inicial qual deseja verificar disponibilidade dos dados e/ou endereço.
+#' @return Um conjunto de dados contendo as seguintes colunas:
 #' 
+#' \item{month }{
+#' mês de referência dos dados consultados;
+#' }
+#' \item{year }{
+#' ano de referência dos dados consultados;
+#' }
+#' \item{available }{
+#' Se TRUE, os dados e endereços estão disponíveis e FALSO, caso contrário;
+#' }
+#' \item{date_check }{
+#' data da verificação.
+#' }
 #' 
-#' @details função usada para gerar o arquivo metadata do CAGED. O arquido pode ser acessato usando data(metadata)
+#' @example 
 #' 
-#' @noRd
+#' (file_available <- available_update_CAGED(last. = "01", last.y = "2020"))
+#' 
+#' #' @references
+#' ftp://ftp.mtps.gov.br/pdet/microdados/CAGED
+#' 
+#' @export
 available_update_CAGED <- function(last.m = "01", last.y = "2007") {
   data_current <- Sys.Date() 
   current_y <-  format(data_current, "%Y")
@@ -64,21 +110,25 @@ available_update_CAGED <- function(last.m = "01", last.y = "2007") {
   last_aux <- as.numeric(paste(last.y, last.m, sep = "."))
   current_aux <- as.numeric(paste(current_y, current_m, sep = "."))
   if(last_aux <= current_aux) {
-    metadata_CAGED <- 
-      base::expand.grid(month = c(paste0("0", 1:9), 10:12), year = as.integer(last.y):2020) %>%
+    available_CAGED <- 
+      base::expand.grid("month" = c(paste0("0", 1:9), 10:12), 
+                        "year" = as.integer(last.y):2020,
+                        stringsAsFactors = FALSE) %>%
       dplyr::as_tibble() %>% 
       dplyr::filter(dplyr::between(x = as.numeric(paste(year, month, sep = ".")),
                                    left = last_aux, 
                                    right = current_aux)) %>% 
       dplyr::group_by(year, month) %>% 
-      dplyr::mutate(date = Sys.Date(), 
-                    available = available_CAGED(m = month, y = year), 
+      dplyr::mutate(available = available_CAGED(m = month, y = year), 
                     description = dplyr::if_else(available, 
                                                  "Dados e endereço disponível!", 
-                                                 "Dados ou endereço indisponível!"))
+                                                 "Dados OU endereço INDISPONÍVEl!"),
+                    date_check = Sys.Date()) %>% 
+      dplyr::ungroup()
   } else {
     stop("Last date (month/year) greater current date (today)")
   }
+  return(available_CAGED)
 } 
 
 
