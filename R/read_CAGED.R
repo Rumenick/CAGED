@@ -19,31 +19,38 @@
 #' }
 #' 
 #' @references
-#' ftp://ftp.mtps.gov.br/pdet/microdados/CAGED
 #' 
-#' @example 
+#' \samp{ftp://ftp.mtps.gov.br/pdet/microdados/CAGED}
+#' 
+#' @examples 
+#' 
 #' # Execute:
-#' # repository_update_CAGED()
+#' repository_update_CAGED()
 #' 
 #' @import dplyr
 #' @importFrom RCurl getURL
 #' @export
 repository_update_CAGED <- function() {
   url_path <- "ftp://ftp.mtps.gov.br/pdet/microdados/CAGED/"
-  RCurl::getURL(url_path) %>% 
-    strsplit(., "\n") %>% 
-    {
-      .[[1]] %>% 
-        strsplit(x = ., split = "<DIR>") %>% 
-        lapply(X = ., 
-               FUN = function(x) {dplyr::tibble("name_path" = suppressWarnings(as.numeric(x[2])), 
-                                                "date_update" = as.Date(x[1], tryFormats = c("%m-%d-%y")))}) %>% 
-        dplyr::bind_rows() %>% 
-        dplyr::filter(!is.na(`name_path`)) %>% 
-        dplyr::mutate("url_path" = paste0(`url_path`, `name_path`),
-                      "date_check" = Sys.Date()) %>% 
-        dplyr::select(`url_path`, `name_path`, `date_update`, `date_check`)
-    }
+  check_sucess <-
+    tryCatch(metadata <- 
+               RCurl::getURL(url_path) %>% 
+               strsplit(., "\n") %>% 
+               {
+                 .[[1]] %>% 
+                   strsplit(x = ., split = "<DIR>") %>% 
+                   lapply(X = ., 
+                          FUN = function(x) {dplyr::tibble("name_path" = suppressWarnings(as.numeric(x[2])), 
+                                                           "date_update" = as.character(as.Date(x[1], tryFormats = c("%m-%d-%y"))))}) %>% 
+                   dplyr::bind_rows() %>% 
+                   dplyr::filter(!is.na(`name_path`)) %>% 
+                   dplyr::mutate("url_path" = paste0(`url_path`, `name_path`),
+                                 "date_check" = as.character(Sys.Date())) %>% 
+                   dplyr::select(`url_path`, `name_path`, `date_update`, `date_check`)
+               }, 
+             error = function(e) {stop("'ftp://ftp.mtps.gov.br/pdet/microdados/CAGED/' indisponível")}, 
+             finally = TRUE)
+  return(metadata)
 }
 
 
@@ -95,12 +102,13 @@ available_CAGED <- function(m = "12", y = "2019") {
 #' data da verificação.
 #' }
 #' 
-#' @example 
+#' @examples
 #' 
 #' (file_available <- available_update_CAGED(last. = "01", last.y = "2020"))
 #' 
-#' #' @references
-#' ftp://ftp.mtps.gov.br/pdet/microdados/CAGED
+#' @references
+#' 
+#' \samp{ftp://ftp.mtps.gov.br/pdet/microdados/CAGED}
 #' 
 #' @export
 available_update_CAGED <- function(last.m = "01", last.y = "2007") {
@@ -112,7 +120,7 @@ available_update_CAGED <- function(last.m = "01", last.y = "2007") {
   if(last_aux <= current_aux) {
     available_CAGED <- 
       base::expand.grid("month" = c(paste0("0", 1:9), 10:12), 
-                        "year" = as.integer(last.y):2020,
+                        "year" = as.integer(last.y):as.numeric(current_y),
                         stringsAsFactors = FALSE) %>%
       dplyr::as_tibble() %>% 
       dplyr::filter(dplyr::between(x = as.numeric(paste(year, month, sep = ".")),
@@ -175,7 +183,9 @@ download_CAGED <- function(m = "12", y = "2019", dir.output = ".") {
 #' a adoção de medidas contra o desemprego e o estabelecimento de mecanismos de assistência aos
 #' desempregados.
 #'
-#' @references http://portalfat.mte.gov.br/programas-e-acoes-2/caged-3/
+#' @references 
+#' 
+#' \samp{http://portalfat.mte.gov.br/programas-e-acoes-2/caged-3/}
 #' 
 #' @author Rumenick Pereira da Silva
 #'
@@ -184,17 +194,13 @@ download_CAGED <- function(m = "12", y = "2019", dir.output = ".") {
 #' @examples
 #'
 #' ## Baixa dados do mês de fevereiro de 2018
-#' # CAGEDEST_022018 <- read_CAGED(month = "02", year = "2018")
-#' # CAGEDEST_022018
+#' CAGEDEST_022018 <- read_CAGED(month = "02", year = "2018")
+#' head(CAGEDEST_022018)
 #'
 #' ## Dois ou mais meses ou anos:
 #' # install.packages("dplyr")
 #'
 #' # configs <- expand.grid(meses = c("01", "02"), anos = c("2018", "2019"))
-#'
-#' # CAGED_list <- mapply(FUN = function(m, y) {read_CAGED(month = m, year = y)},
-#' #                     m = configs$meses, y = configs$anos)
-#' # dplyr::bind_rows(CAGED_list) # Juntar todos os dados
 #' 
 #' @importFrom data.table fread
 #' @export
@@ -209,7 +215,7 @@ read_CAGED <- function(month = "12", year = "2019") {
   info_un7z <- un7z(zipfile = info_download$dir_file, dir.output = td)
   
   # Read data CAGED for month/year:
-  file_txt <- gsub(pattern = ".7z", replacement = ".txt", x = info_download$dir_file)
+  file_txt <- file.path(td, dir(td)[grepl(pattern = paste0(month, year, ".txt"), dir(td))])
   data_CAGED <-
     data.table::fread(file = file_txt,
                       sep = ";",

@@ -10,6 +10,6 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.0
 Depends: R (>= 3.6.0)
-Imports: data.table (>= 1.12.8), dplyr (>= 0.8.5), RCurl (>= 1.98-1.2)
+Imports: data.table (>= 1.12.8), dplyr (>= 0.8.5), RCurl (>= 1.98-1.2), DBI (>= 1.1.0), RSQLite (>= 2.2.0), tidyselect (>= 1.0.0)
 Suggests: purrr
    

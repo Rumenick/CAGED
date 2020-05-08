@@ -28,21 +28,17 @@ desempregados.
 \examples{
 
 ## Baixa dados do mês de fevereiro de 2018
-# CAGEDEST_022018 <- read_CAGED(month = "02", year = "2018")
-# CAGEDEST_022018
+CAGEDEST_022018 <- read_CAGED(month = "02", year = "2018")
+head(CAGEDEST_022018)
 
 ## Dois ou mais meses ou anos:
 # install.packages("dplyr")
 
 # configs <- expand.grid(meses = c("01", "02"), anos = c("2018", "2019"))
 
-# CAGED_list <- mapply(FUN = function(m, y) {read_CAGED(month = m, year = y)},
-#                     m = configs$meses, y = configs$anos)
-# dplyr::bind_rows(CAGED_list) # Juntar todos os dados
-
 }
 \references{
-http://portalfat.mte.gov.br/programas-e-acoes-2/caged-3/
+\samp{http://portalfat.mte.gov.br/programas-e-acoes-2/caged-3/}
 }
 \author{
 Rumenick Pereira da Silva

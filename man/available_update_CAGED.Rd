@@ -29,3 +29,11 @@ data da verificação.
 Permite avaliar a disponibilidade dos dados e/ou endereço para todos os meses e anos no
 período compreendido entre uma data incial até a data atual.
 }
+\examples{
+
+(file_available <- available_update_CAGED(last. = "01", last.y = "2020"))
+
+}
+\references{
+\samp{ftp://ftp.mtps.gov.br/pdet/microdados/CAGED}
+}

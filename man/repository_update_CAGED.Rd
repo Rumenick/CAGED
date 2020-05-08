@@ -26,6 +26,12 @@ data da verificação.
 Acessa a ftp onde está disponível os dados do CAGED e retorna metadados das pastas de dados 
 do reposítorio.
 }
+\examples{
+
+# Execute:
+repository_update_CAGED()
+
+}
 \references{
-ftp://ftp.mtps.gov.br/pdet/microdados/CAGED
+\samp{ftp://ftp.mtps.gov.br/pdet/microdados/CAGED}
 }
