@@ -20,7 +20,10 @@
 #' \item{comp_declarada }{
 #' Competência Declarada;
 #' }
-#' \item{cnae_2 }{
+#' \item{cod_cbo }{
+#' CBO 2002 Ocupação
+#' }
+#' \item{cod_cnae }{
 #' CNAE 2.0 Classe;
 #' }
 #' \item{porte_emprasa }{
@@ -28,6 +31,9 @@
 #' }
 #' \item{escolaridade }{
 #' Grau Instrução;
+#' }
+#' \item{qtd_horas_contrat }{
+#' Qtd Hora Contrat
 #' }
 #' \item{idade }{
 #' Idade;
@@ -50,7 +56,7 @@
 #' \item{tipo_mov_desagregado }{
 #' Tipo Mov Desagregado;
 #' }
-#' \item{uf_cod }{
+#' \item{cod_uf }{
 #' UF;
 #' }
 #' \item{ind_trab_parcial }{
@@ -103,7 +109,7 @@ config_RSQLite_CAGEG <- function(last.m = "01", last.y = "2007", dir.SQLite = ".
       for (y in unique(.[["year"]])) {
         for(m in unique(.[["month"]])) {
          read_CAGED(month = m, year = y) %>% 
-            cleaning_CAGED() %>% 
+            select_vars_CAGED() %>% 
             DBI::dbWriteTable(db, "CAGED", ., append = TRUE)
         }
       }

@@ -1,25 +1,25 @@
-#' @title Função para selecionar variáveis nos dados do CAGED
+#' @title Função para selecionar variáveis de interesse nos dados do CAGED
 #' 
-#' @name cleaning_CAGED
+#' @name select_vars_CAGED
 #' 
 #' @param .data output da função \code{read_CAGED}.
 #' 
 #' @noRd
 #' @importFrom stats setNames
 #' @importFrom tidyselect all_of
-cleaning_CAGED <- function(.data) {
+select_vars_CAGED <- function(.data) {
   vars <- 
     c(admitidos = "Admitidos/Desligados",  
       comp_declarada = "Competência Declarada", 
       "Município",             
       "Ano Declarado",         
-      "cbo_2002" = "CBO 2002 Ocupação",     
+      cod_cbo = "CBO 2002 Ocupação",     
       "CNAE 1.0 Classe",       
-      cnae_2 = "CNAE 2.0 Classe",       
+      cod_cnae = "CNAE 2.0 Classe",       
       "CNAE 2.0 Subclas",     
-      porte_emprasa = "Faixa Empr Início Jan", 
+      porte_empresa = "Faixa Empr Início Jan", 
       escolaridade = "Grau Instrução",        
-      "Qtd Hora Contrat",      
+      qtd_horas_contrat = "Qtd Hora Contrat",      
       "IBGE Subsetor",         
       idade = "Idade",                 
       "Ind Aprendiz",          
@@ -32,7 +32,7 @@ cleaning_CAGED <- function(.data) {
       "Tipo Estab",            
       "Tipo Defic",            
       tipo_mov_desagregado = "Tipo Mov Desagregado",  
-      uf_cod = "UF",                   
+      cod_uf = "UF",                   
       "Bairros SP",            
       "Bairros Fortaleza",     
       "Bairros RJ",            
