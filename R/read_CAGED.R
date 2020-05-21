@@ -1,7 +1,7 @@
 #' @title Verifica alterações nas pastas de dados do repositório do CAGED
 #' 
 #' @description Acessa a ftp onde está disponível os dados do CAGED e retorna metadados das pastas de dados 
-#' do reposítorio.
+#' do repositório.
 #' 
 #' @return Um conjunto de dados contendo as seguintes colunas:
 #' 
@@ -12,7 +12,7 @@
 #' nome do diretório (ano de referência dos dados);
 #' }
 #' \item{date_update }{
-#' data da última alteração em pelos um dos arquivos do diretório;
+#' data da última alteração em pelos um dos arquivos do respectivo diretório/ano;
 #' }
 #' \item{date_check }{
 #' data da verificação.
@@ -31,7 +31,7 @@
 #' @importFrom RCurl getURL
 #' @export
 repository_update_CAGED <- function() {
-  url_path <- "ftp://ftp.mtps.gov.br/pdet/microdados/CAGED/"
+  path_url <- "ftp://ftp.mtps.gov.br/pdet/microdados/CAGED/"
   check_sucess <-
     tryCatch(metadata <- 
                RCurl::getURL(url_path) %>% 
@@ -40,13 +40,13 @@ repository_update_CAGED <- function() {
                  .[[1]] %>% 
                    strsplit(x = ., split = "<DIR>") %>% 
                    lapply(X = ., 
-                          FUN = function(x) {dplyr::tibble("name_path" = suppressWarnings(as.numeric(x[2])), 
+                          FUN = function(x) {dplyr::tibble("path_name" = suppressWarnings(as.numeric(x[2])), 
                                                            "date_update" = as.character(as.Date(x[1], tryFormats = c("%m-%d-%y"))))}) %>% 
                    dplyr::bind_rows() %>% 
-                   dplyr::filter(!is.na(`name_path`)) %>% 
-                   dplyr::mutate("url_path" = paste0(`url_path`, `name_path`),
+                   dplyr::filter(!is.na(`path_name`)) %>% 
+                   dplyr::mutate("path_url" = paste0(`path_url`, `path_name`),
                                  "date_check" = as.character(Sys.Date())) %>% 
-                   dplyr::select(`url_path`, `name_path`, `date_update`, `date_check`)
+                   dplyr::select(`path_url`, `path_name`, `date_update`, `date_check`)
                }, 
              error = function(e) {stop("'ftp://ftp.mtps.gov.br/pdet/microdados/CAGED/' indisponível")}, 
              finally = TRUE)

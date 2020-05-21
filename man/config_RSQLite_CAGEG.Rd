@@ -30,7 +30,10 @@ Admitidos/Desligados;
 \item{comp_declarada }{
 Competência Declarada;
 }
-\item{cnae_2 }{
+\item{cod_cbo }{
+CBO 2002 Ocupação
+}
+\item{cod_cnae }{
 CNAE 2.0 Classe;
 }
 \item{porte_emprasa }{
@@ -38,6 +41,9 @@ Faixa Empr Início Jan;
 }
 \item{escolaridade }{
 Grau Instrução;
+}
+\item{qtd_horas_contrat }{
+Qtd Hora Contrat;
 }
 \item{idade }{
 Idade;
@@ -60,7 +66,7 @@ Tempo Emprego;
 \item{tipo_mov_desagregado }{
 Tipo Mov Desagregado;
 }
-\item{uf_cod }{
+\item{cod_uf }{
 UF;
 }
 \item{ind_trab_parcial }{

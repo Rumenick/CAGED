@@ -16,7 +16,7 @@ link do diretório que estou verificando alterações no repositório;
 nome do diretório (ano de referência dos dados);
 }
 \item{date_update }{
-data da última alteração em pelos um dos arquivos do diretório;
+data da última alteração em pelos um dos arquivos do respectivo diretório/ano;
 }
 \item{date_check }{
 data da verificação.
@@ -24,7 +24,7 @@ data da verificação.
 }
 \description{
 Acessa a ftp onde está disponível os dados do CAGED e retorna metadados das pastas de dados 
-do reposítorio.
+do repositório.
 }
 \examples{
 
