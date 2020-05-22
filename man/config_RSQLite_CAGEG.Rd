@@ -8,7 +8,8 @@ config_RSQLite_CAGEG(
   last.m = "01",
   last.y = "2007",
   dir.SQLite = "./",
-  name.SQLite = "DB.sqlite"
+  name.SQLite = "DB.sqlite",
+  ...
 )
 }
 \arguments{
@@ -18,6 +19,8 @@ config_RSQLite_CAGEG(
 de existir o banco, diretório onde está o banco de dados SQLite.}
 
 \item{name.SQLite}{nome do BD, por padrão "BD.sqlite".}
+
+\item{...}{argumentos passado para função \code{un7z}, ex.: \code{path7zip}.}
 }
 \value{
 Se o BD ainda não foi criado essa função criará o banco de dados e 

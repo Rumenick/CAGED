@@ -4,7 +4,7 @@
 \alias{un7z}
 \title{Extract files form 7zip (7z) archive}
 \usage{
-un7z(zipfile, dir.output = ".")
+un7z(zipfile, dir.output = ".", path7zip = NULL)
 }
 \arguments{
 \item{zipfile}{The pathname of the 7z file.}

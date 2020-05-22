@@ -4,7 +4,7 @@
 \alias{read_CAGED}
 \title{Importar dados do CAGED}
 \usage{
-read_CAGED(month = "12", year = "2019")
+read_CAGED(month = "12", year = "2019", ...)
 }
 \arguments{
 \item{month}{Mês do ano qual deseja os dados, deve ser especificado como caracter com dois dígitos,
@@ -12,6 +12,8 @@ ex.: "01" (mês de janeiro).}
 
 \item{year}{Ano qual deseja os dados, deve ser especificado como caracter com quatro dígitos,
 ex.: "2019".}
+
+\item{...}{argumentos passado para função \code{un7z}, ex.: \code{path7zip}.}
 }
 \description{
 Função para leitura dos dados do Cadastro Geral de Empregados e Desempregados
