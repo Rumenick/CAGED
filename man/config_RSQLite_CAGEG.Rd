@@ -43,11 +43,7 @@ Faixa Empr Início Jan;
 Grau Instrução;
 }
 \item{qtd_horas_contrat }{
-<<<<<<< HEAD
 Qtd Hora Contrat;
-=======
-Qtd Hora Contrat
->>>>>>> 096a070125a149bd11548c9a4c5792118b225e13
 }
 \item{idade }{
 Idade;

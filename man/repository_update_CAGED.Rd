@@ -9,10 +9,10 @@ repository_update_CAGED()
 \value{
 Um conjunto de dados contendo as seguintes colunas:
 
-\item{url_path }{
+\item{path_url }{
 link do diretório que estou verificando alterações no repositório;
 }
-\item{dir_name }{
+\item{path_name }{
 nome do diretório (ano de referência dos dados);
 }
 \item{date_update }{

@@ -5,10 +5,10 @@
 #' 
 #' @return Um conjunto de dados contendo as seguintes colunas:
 #' 
-#' \item{url_path }{
+#' \item{path_url }{
 #' link do diretório que estou verificando alterações no repositório;
 #' }
-#' \item{dir_name }{
+#' \item{path_name }{
 #' nome do diretório (ano de referência dos dados);
 #' }
 #' \item{date_update }{
@@ -34,7 +34,7 @@ repository_update_CAGED <- function() {
   path_url <- "ftp://ftp.mtps.gov.br/pdet/microdados/CAGED/"
   check_sucess <-
     tryCatch(metadata <- 
-               RCurl::getURL(url_path) %>% 
+               RCurl::getURL(path_url) %>% 
                strsplit(., "\n") %>% 
                {
                  .[[1]] %>% 
