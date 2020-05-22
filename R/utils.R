@@ -38,7 +38,7 @@
 #' @keywords 7zip
 #'
 #' @export
-un7z <- function(zipfile, dir.output = ".", path7zip.exe = "C:\\Program Files\\7-Zip\\7z") {
+un7z <- function(zipfile, dir.output = ".", path7zip = NULL) {
   
   if(system("7z", show.output.on.console = FALSE)) {
     stop("Install 7zip (download in https://www.7-zip.org/download.html)")
@@ -56,7 +56,7 @@ un7z <- function(zipfile, dir.output = ".", path7zip.exe = "C:\\Program Files\\7
     zipfile    <- gsub(pattern = "/", replacement = "\\", x = path.expand(zipfile), fixed = TRUE)
   }
 
-  check_error <- tryCatch(system(sprintf('%s e -o%s %s', ifelse(is.null(path7zip.exe), "7z", path7zip.exe), dir.output, zipfile), show.output.on.console = FALSE),
+  check_error <- tryCatch(system(sprintf('%s e -o%s %s', ifelse(is.null(path7zip), "7z", path7zip), dir.output, zipfile), show.output.on.console = FALSE),
                           error = function(e) { TRUE },
                           finally = FALSE)
   if(check_error) {
