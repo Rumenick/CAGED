@@ -10,6 +10,8 @@ un7z(zipfile, dir.output = ".", path7zip = NULL)
 \item{zipfile}{The pathname of the 7z file.}
 
 \item{dir.output}{The directory for extracting the files.}
+
+\item{path7zip}{The program files directory of 7zip software.}
 }
 \description{
 Function for extract files form 7zip (7z) archive

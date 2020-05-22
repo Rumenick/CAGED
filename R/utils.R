@@ -7,6 +7,8 @@
 #' @param zipfile The pathname of the 7z file.
 #'
 #' @param dir.output The directory for extracting the files.
+#' 
+#' @param path7zip The program files directory of 7zip software.
 #'
 #' @details 7-Zip is free software with open source. The most of the code is under the GNU LGPL
 #' license. Some parts of the code are under the BSD 3-clause License. Also there is unRAR
