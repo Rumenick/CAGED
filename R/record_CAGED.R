@@ -9,6 +9,7 @@
 #' 
 #' @param name.SQLite nome do BD, por padrão "BD.sqlite".
 #' 
+#' @param ... argumentos passado para função \code{un7z}, ex.: \code{path7zip}.
 #' 
 #' @return Se o BD ainda não foi criado essa função criará o banco de dados e 
 #' adicionará todos os dados do CAGED disponível até a data atual. Por padrão,
@@ -91,7 +92,7 @@
 #' @import dplyr
 #' 
 #' @export
-config_RSQLite_CAGEG <- function(last.m = "01", last.y = "2007", dir.SQLite = "./", name.SQLite = "DB.sqlite") {
+config_RSQLite_CAGEG <- function(last.m = "01", last.y = "2007", dir.SQLite = "./", name.SQLite = "DB.sqlite", ...) {
   
   if (dir.SQLite == ":memory:") {
     name_DB <- dir.SQLite
@@ -108,7 +109,7 @@ config_RSQLite_CAGEG <- function(last.m = "01", last.y = "2007", dir.SQLite = ".
     {
       for (y in unique(.[["year"]])) {
         for(m in unique(.[["month"]])) {
-         read_CAGED(month = m, year = y) %>% 
+         read_CAGED(month = m, year = y, ...) %>% 
             select_vars_CAGED() %>% 
             DBI::dbWriteTable(db, "CAGED", ., append = TRUE)
         }

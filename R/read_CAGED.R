@@ -175,6 +175,8 @@ download_CAGED <- function(m = "12", y = "2019", dir.output = ".") {
 #'
 #' @param year Ano qual deseja os dados, deve ser especificado como caracter com quatro dígitos,
 #' ex.: "2019".
+#' 
+#' @param ... argumentos passado para função \code{un7z}, ex.: \code{path7zip}.
 #'
 #' @details Instituído pela Lei n° 4.923/65, que obrigou as empresas abrangidas pelo Sistema de
 #' Consolidação das Leis do Trabalho a informarem ao Ministério do Trabalho, em relação nominal, a
@@ -204,7 +206,7 @@ download_CAGED <- function(m = "12", y = "2019", dir.output = ".") {
 #' 
 #' @importFrom data.table fread
 #' @export
-read_CAGED <- function(month = "12", year = "2019") {
+read_CAGED <- function(month = "12", year = "2019", ...) {
   # create temporary directory
   td <- tempdir()
   
@@ -212,7 +214,7 @@ read_CAGED <- function(month = "12", year = "2019") {
   info_download <- download_CAGED(m = month, y = year, dir.output = td)
   
   # Extract file form 7zip archive:
-  info_un7z <- un7z(zipfile = info_download$dir_file, dir.output = td)
+  info_un7z <- un7z(zipfile = info_download$dir_file, dir.output = td, ...)
   
   # Read data CAGED for month/year:
   file_txt <- file.path(td, dir(td)[grepl(pattern = paste0(month, year, ".txt"), dir(td))])
