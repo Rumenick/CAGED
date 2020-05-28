@@ -1,6 +1,74 @@
-#' @title Configurar e atualizar bancos de dados com os dados do CAGED
+#' @title Selecionar variáveis de interesse nos dados do CAGED
 #' 
-#' @name config_RSQLite_CAGEG
+#' @name select_vars_CAGED
+#' 
+#' @param .data output da função \code{read_CAGED}.
+#' 
+#' @noRd
+#' @importFrom stats setNames
+#' @importFrom tidyselect all_of
+select_vars_CAGED <- function(.data) {
+  vars <- 
+    c(admitidos = "Admitidos/Desligados",  
+      comp_declarada = "Competência Declarada", 
+      "Município",             
+      "Ano Declarado",         
+      cod_cbo = "CBO 2002 Ocupação",     
+      "CNAE 1.0 Classe",       
+      cod_cnae = "CNAE 2.0 Classe",       
+      "CNAE 2.0 Subclas",     
+      porte_empresa = "Faixa Empr Início Jan", 
+      escolaridade = "Grau Instrução",        
+      qtd_horas_contrat = "Qtd Hora Contrat",      
+      "IBGE Subsetor",         
+      idade = "Idade",                 
+      "Ind Aprendiz",          
+      "Ind Portador Defic",   
+      cor = "Raça Cor",             
+      salario_mensal = "Salário Mensal",        
+      saldo_mov = "Saldo Mov",            
+      sexo = "Sexo",                 
+      tempo_emprego = "Tempo Emprego",         
+      "Tipo Estab",            
+      "Tipo Defic",            
+      tipo_mov_desagregado = "Tipo Mov Desagregado",  
+      cod_uf = "UF",                   
+      "Bairros SP",            
+      "Bairros Fortaleza",     
+      "Bairros RJ",            
+      "Distritos SP",          
+      "Regiões Adm DF",        
+      "Mesorregião",          
+      "Microrregião",         
+      "Região Adm RJ",        
+      "Região Adm SP",         
+      "Região Corede",
+      "Região Corede 04",
+      "Região Gov SP",
+      "Região Senac PR",
+      "Região Senai PR",
+      "Região Senai SP",    
+      "Sub-Região Senai PR",
+      ind_trab_parcial = "Ind Trab Parcial",
+      ind_trab_intermitente = "Ind Trab Intermitente")
+  
+  vars_aux1 <- vars[vars %in% names(.data) & names(vars) != ""]
+  vars_aux2 <- vars[!(vars %in% names(.data)) & names(vars) != ""]
+  
+  .data %>% 
+    dplyr::select(all_of(vars_aux1)) %>% 
+    {
+      vector(mode = "list", length = length(vars_aux2)) %>% 
+        stats::setNames(vars_aux2) %>% 
+        lapply(., FUN = function(x) {rep(NA, nrow(.data))}) %>% 
+        dplyr::bind_cols(.data, .)
+    } %>% 
+    dplyr::select(tidyselect::all_of(vars[names(vars) != ""]))
+}
+
+#' @title Gravar e atualizar bancos de dados com os dados do CAGED
+#' 
+#' @name record_CAGEG
 #' 
 #' @param last.m,last.y  mês e ano para formar a data inicial, ex.: "12/2019".
 #' 
@@ -73,7 +141,7 @@
 #' 
 #' @examples
 #' 
-#' db <- config_RSQLite_CAGEG("12", "2019", dir.SQLite = ":memory:")
+#' db <- record_CAGEG("12", "2019", dir.SQLite = ":memory:")
 #' 
 #' # Tabelas:
 #' DBI::dbListTables(db)
@@ -92,7 +160,7 @@
 #' @import dplyr
 #' 
 #' @export
-config_RSQLite_CAGEG <- function(last.m = "01", last.y = "2007", dir.SQLite = "./", name.SQLite = "DB.sqlite", ...) {
+record_CAGEG <- function(last.m = "01", last.y = "2007", dir.SQLite = "./", name.SQLite = "DB.sqlite", ...) {
   
   if (dir.SQLite == ":memory:") {
     name_DB <- dir.SQLite
