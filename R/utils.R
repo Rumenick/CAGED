@@ -40,7 +40,7 @@
 #' @keywords 7zip
 #'
 #' @export
-un7z <- function(zipfile, dir.output = ".", path7zip = NULL) {
+un7z <- function(zipfile, dir.output = ".", path7zip) {
   
   if(system("7z", show.output.on.console = FALSE)) {
     stop("Install 7zip (download in https://www.7-zip.org/download.html)")
