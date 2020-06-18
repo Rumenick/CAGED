@@ -135,9 +135,9 @@ select_vars_CAGED <- function(.data) {
 #' Ind Trab Intermitente.
 #' } 
 #' 
-#' Se deseja acessar todas as variáveis use a função \code{read_CAGED}. Ademais
-#' a função criará uma tabela RepositoryMetadataCAGED com metadados gerado pela
-#' função \code{RepositoryMetadataCAGED} de mesmo nome.
+#' Se deseja acessar todas as variáveis use a função \code{read_CAGED}. Ademais,
+#' a função criará a tabela MetadadosCAGED com os metadados gerado pela
+#' função \code{repository_metadata_CAGED} de mesmo nome.
 #' 
 #' @examples
 #' 
@@ -150,7 +150,7 @@ select_vars_CAGED <- function(.data) {
 #' DBI::dbReadTable(db, "CAGED")
 #' 
 #' # Acessando a tabela repository_metadata_CAGED:
-#' DBI::dbReadTable(db, "RepositoryMetadataCAGED")
+#' DBI::dbReadTable(db, "MetadadosCAGED")
 #' 
 #' # Desconectando:
 #' DBI::dbDisconnect(db)
@@ -184,7 +184,7 @@ record_CAGEG <- function(last.m = "01", last.y = "2007", dir.SQLite = "./", name
       }
     }
   
-  DBI::dbWriteTable(db, "RepositoryMetadataCAGED", repository_update_CAGED(), append = TRUE)
+  DBI::dbWriteTable(db, "MetadadosCAGED", repository_update_CAGED(), append = TRUE)
   invisible(db)
 }
 

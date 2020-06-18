@@ -48,7 +48,7 @@ repository_update_CAGED <- function() {
                                  "date_check" = as.character(Sys.Date())) %>% 
                    dplyr::select(`path_url`, `path_name`, `date_update`, `date_check`)
                }, 
-             error = function(e) {stop("'ftp://ftp.mtps.gov.br/pdet/microdados/CAGED/' indisponível")}, 
+             error = function(e) {stop("'ftp://ftp.mtps.gov.br/pdet/microdados/CAGED/' INDISPONÍVEl")}, 
              finally = TRUE)
   return(metadata)
 }
@@ -71,7 +71,7 @@ available_CAGED <- function(m = "12", y = "2019") {
   url_file <- file.path(url_path, y, paste0("CAGEDEST_", m, y, ".7z"))
   check_file <- RCurl::url.exists(url_file)
   if(check_file) {
-    cat("\n Dados e endereço disponível! Ref.:", paste(m, y, sep = "/"), "\n")
+    cat("\n Dados e endereço DISPONÍVEIS! Mês/Ano:", paste(m, y, sep = "/"), "\n")
   } else {
     cat("\n Dados OU endereço INDISPONÍVEL! Mês/Ano:", paste(m, y, sep = "/"), "\n")
   }
