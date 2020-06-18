@@ -1,59 +1,3 @@
-#' @title Verifica alterações nas pastas de dados do repositório do CAGED
-#' 
-#' @description Acessa a ftp onde está disponível os dados do CAGED e retorna metadados das pastas de dados 
-#' do repositório.
-#' 
-#' @return Um conjunto de dados contendo as seguintes colunas:
-#' 
-#' \item{path_url }{
-#' link do diretório que estou verificando alterações no repositório;
-#' }
-#' \item{path_name }{
-#' nome do diretório (ano de referência dos dados);
-#' }
-#' \item{date_update }{
-#' data da última alteração em pelos um dos arquivos do respectivo diretório/ano;
-#' }
-#' \item{date_check }{
-#' data da verificação.
-#' }
-#' 
-#' @references
-#' 
-#' \samp{ftp://ftp.mtps.gov.br/pdet/microdados/CAGED}
-#' 
-#' @examples 
-#' 
-#' # Execute:
-#' repository_update_CAGED()
-#' 
-#' @import dplyr
-#' @importFrom RCurl getURL
-#' @export
-repository_update_CAGED <- function() {
-  path_url <- "ftp://ftp.mtps.gov.br/pdet/microdados/CAGED/"
-  check_sucess <-
-    tryCatch(metadata <- 
-               RCurl::getURL(path_url) %>% 
-               strsplit(., "\n") %>% 
-               {
-                 .[[1]] %>% 
-                   strsplit(x = ., split = "<DIR>") %>% 
-                   lapply(X = ., 
-                          FUN = function(x) {dplyr::tibble("path_name" = suppressWarnings(as.numeric(x[2])), 
-                                                           "date_update" = as.character(as.Date(x[1], tryFormats = c("%m-%d-%y"))))}) %>% 
-                   dplyr::bind_rows() %>% 
-                   dplyr::filter(!is.na(`path_name`)) %>% 
-                   dplyr::mutate("path_url" = paste0(`path_url`, `path_name`),
-                                 "date_check" = as.character(Sys.Date())) %>% 
-                   dplyr::select(`path_url`, `path_name`, `date_update`, `date_check`)
-               }, 
-             error = function(e) {stop("'ftp://ftp.mtps.gov.br/pdet/microdados/CAGED/' INDISPONÍVEl")}, 
-             finally = TRUE)
-  return(metadata)
-}
-
-
 #' @title Verifica se os dados e/ou endereço estão disponíveis
 #' 
 #' @name avaliable_CAGED
@@ -71,9 +15,9 @@ available_CAGED <- function(m = "12", y = "2019") {
   url_file <- file.path(url_path, y, paste0("CAGEDEST_", m, y, ".7z"))
   check_file <- RCurl::url.exists(url_file)
   if(check_file) {
-    cat("\n Dados e endereço DISPONÍVEIS! Mês/Ano:", paste(m, y, sep = "/"), "\n")
+    message("\n Dados e endereço DISPONÍVEIS! Mês/Ano: ", paste(m, y, sep = "/"), "\n")
   } else {
-    cat("\n Dados OU endereço INDISPONÍVEL! Mês/Ano:", paste(m, y, sep = "/"), "\n")
+    message("\n Dados OU endereço INDISPONÍVEL! Mês/Ano: ", paste(m, y, sep = "/"), "\n")
   }
   invisible(check_file)
 }
@@ -139,6 +83,74 @@ available_update_CAGED <- function(last.m = "01", last.y = "2007") {
   return(available_CAGED)
 } 
 
+
+#' @title Verifica alterações nas pastas de dados do repositório do CAGED
+#' 
+#' @description Acessa a ftp onde está disponível os dados do CAGED e retorna metadados das pastas de dados 
+#' do repositório.
+#' 
+#' @param check_files Saída da função \code{available_update_CAGED}, se NULL esta função será executada internamente
+#' por \code{repository_update_CAGED} considerando \code{last.m = "01"} e \code{last.y = "2007"}.
+#' 
+#' @return Um conjunto de dados contendo as seguintes colunas:
+#' 
+#' \item{file_url }{
+#' link do arquivo que estou verificando alterações no repositório do CAGED;
+#' }
+#' \item{file_name }{
+#' nome do arquivo de dados;
+#' }
+#' \item{date_update }{
+#' data da última alteração no arquivo realizada pelo o gorveno;
+#' }
+#' \item{date_check }{
+#' data da verificação.
+#' }
+#' 
+#' @references
+#' 
+#' \samp{ftp://ftp.mtps.gov.br/pdet/microdados/CAGED}
+#' 
+#' @examples 
+#' 
+#' # Execute:
+#' repository_update_CAGED()
+#' 
+#' @import dplyr
+#' @importFrom RCurl getURL
+#' @export
+repository_update_CAGED <- function(check_files = NULL) {
+  if(is.null(check_files)) {
+    check_files <- available_update_CAGED()
+  }
+  
+  path_url <- paste0("ftp://ftp.mtps.gov.br/pdet/microdados/CAGED/", unique(check_files$year[check_files$available]), "/")
+  check_sucess <-
+    tryCatch(metadata <- 
+               RCurl::getURL(path_url) %>% 
+               lapply(., function(x)  {strsplit(x, "\n")}) %>% 
+               {
+                 df_aux <- dplyr::tibble()
+                 for(i in seq_along(.)) {
+                   df_aux <- 
+                     bind_rows(df_aux,
+                               .[[i]][[1]] %>% 
+                                 strsplit(x = ., split = " ") %>% 
+                                 lapply(X = ., 
+                                        FUN = function(x) {dplyr::tibble("file_name" = x[17], 
+                                                                         "date_update" = as.character(as.Date(x[1], tryFormats = c("%m-%d-%y"))))}) %>% 
+                                 dplyr::bind_rows() %>% 
+                                 dplyr::mutate("file_url" = paste0(path_url[i], `file_name`),
+                                               "date_check" = as.character(Sys.Date())) %>% 
+                                 dplyr::select(`file_url`, `file_name`, `date_update`, `date_check`))
+                   
+                 }
+                 df_aux
+               }, 
+             error = function(e) {stop("'ftp://ftp.mtps.gov.br/pdet/microdados/CAGED/' INDISPONÍVEl")}, 
+             finally = TRUE)
+  return(metadata)
+}
 
 #' @importFrom utils download.file
 #'

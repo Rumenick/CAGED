@@ -170,9 +170,9 @@ record_CAGEG <- function(last.m = "01", last.y = "2007", dir.SQLite = "./", name
   
   db <- DBI::dbConnect(RSQLite::SQLite(), name_DB)
   
-  metadata_files <- available_update_CAGED(last.m, last.y)
+  check_files <- available_update_CAGED(last.m, last.y)
   
-  metadata_files %>% 
+  check_files %>% 
     dplyr::filter(available) %>%
     {
       for (y in unique(.[["year"]])) {

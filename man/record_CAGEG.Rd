@@ -79,8 +79,8 @@ Ind Trab Parcial;
 Ind Trab Intermitente.
 } 
 
-Se deseja acessar todas as variáveis use a função \code{read_CAGED}. Ademais
-a função criará uma tabela repository_metadata_CAGED com metadados gerado pela
+Se deseja acessar todas as variáveis use a função \code{read_CAGED}. Ademais,
+a função criará a tabela MetadadosCAGED com os metadados gerado pela
 função \code{repository_metadata_CAGED} de mesmo nome.
 }
 \description{
@@ -97,7 +97,7 @@ DBI::dbListTables(db)
 DBI::dbReadTable(db, "CAGED")
 
 # Acessando a tabela repository_metadata_CAGED:
-DBI::dbReadTable(db, "repository_metadata_CAGED")
+DBI::dbReadTable(db, "MetadadosCAGED")
 
 # Desconectando:
 DBI::dbDisconnect(db)
