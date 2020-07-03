@@ -2,33 +2,38 @@
 % Please edit documentation in R/read_CAGED.R
 \name{repository_update_CAGED}
 \alias{repository_update_CAGED}
-\title{Verifica alterações nas pastas de dados do repositório do CAGED}
+\title{Verifica alterações nas arquivos de dados do repositório do CAGED}
 \usage{
-repository_update_CAGED()
+repository_update_CAGED(check_files = NULL)
+}
+\arguments{
+\item{check_files}{Saída da função \code{available_update_CAGED}, se NULL esta função será executada internamente
+por \code{repository_update_CAGED} considerando \code{last.m = "01"} e \code{last.y = "2007"}.}
 }
 \value{
 Um conjunto de dados contendo as seguintes colunas:
 
-\item{path_url }{
-link do diretório que estou verificando alterações no repositório;
+\item{file_url }{
+link do arquivo que estou verificando alterações no repositório do CAGED;
 }
-\item{path_name }{
-nome do diretório (ano de referência dos dados);
+\item{file_name }{
+nome do arquivo de dados;
 }
 \item{date_update }{
-data da última alteração em pelos um dos arquivos do respectivo diretório/ano;
+data da última alteração no arquivo realizada pelo o gorveno;
 }
 \item{date_check }{
 data da verificação.
 }
 }
 \description{
-Acessa a ftp onde está disponível os dados do CAGED e retorna metadados das pastas de dados 
+Acessa a ftp onde está disponível os dados do CAGED e retorna metadados dos arquivos de dados 
 do repositório.
 }
 \examples{
 
 # Execute:
+check_files <- available_update_CAGED()
 repository_update_CAGED()
 
 }

@@ -84,9 +84,9 @@ available_update_CAGED <- function(last.m = "01", last.y = "2007") {
 } 
 
 
-#' @title Verifica alterações nas pastas de dados do repositório do CAGED
+#' @title Verifica alterações nas arquivos de dados do repositório do CAGED
 #' 
-#' @description Acessa a ftp onde está disponível os dados do CAGED e retorna metadados das pastas de dados 
+#' @description Acessa a ftp onde está disponível os dados do CAGED e retorna metadados dos arquivos de dados 
 #' do repositório.
 #' 
 #' @param check_files Saída da função \code{available_update_CAGED}, se NULL esta função será executada internamente
@@ -114,6 +114,7 @@ available_update_CAGED <- function(last.m = "01", last.y = "2007") {
 #' @examples 
 #' 
 #' # Execute:
+#' check_files <- available_update_CAGED()
 #' repository_update_CAGED()
 #' 
 #' @import dplyr

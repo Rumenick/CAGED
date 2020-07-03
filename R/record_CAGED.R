@@ -168,10 +168,13 @@ record_CAGEG <- function(last.m = "01", last.y = "2007", dir.SQLite = "./", name
     name_DB <- file.path(dir.SQLite, name.SQLite)
   }
   
+  # Estabelecendo a conexão ou criando um BD:
   db <- DBI::dbConnect(RSQLite::SQLite(), name_DB)
   
+  # Verificando a disponibilidade dos arquivos de dados:
   check_files <- available_update_CAGED(last.m, last.y)
   
+  # Gravando no BD os dados disponíveis:
   check_files %>% 
     dplyr::filter(available) %>%
     {
@@ -184,7 +187,8 @@ record_CAGEG <- function(last.m = "01", last.y = "2007", dir.SQLite = "./", name
       }
     }
   
-  DBI::dbWriteTable(db, "MetadadosCAGED", repository_update_CAGED(), append = TRUE)
+  # Salvando os metadados:
+  DBI::dbWriteTable(db, "MetadadosCAGED", repository_update_CAGED(check_files), append = TRUE)
   invisible(db)
 }
 

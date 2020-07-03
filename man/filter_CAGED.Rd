@@ -4,14 +4,14 @@
 \alias{filter_CAGED}
 \title{Filtrar os dados do CAGED de acordo com o projeto}
 \usage{
-filter_CAGED(conn, data.ref = "10/2019", n.ref = 12, par.CAGED = list())
+filter_CAGED(conn, data.ref.coleta, n.ref.coleta, par.CAGED = list())
 }
 \arguments{
 \item{conn}{Objeto DBIConnection produzido por DBI::dbConnect().}
 
-\item{data.ref}{Data de referência do projeto.}
+\item{data.ref.coleta}{Data de referência do projeto.}
 
-\item{n.ref}{Números de meses do CAGED a serem filtrados em relação a \code{data_ref}. Usada para filtrar
+\item{n.ref.coleta}{Números de meses do CAGED a serem filtrados em relação a \code{data_ref}. Usada para filtrar
 os dados do CAGED, por padrão o filtro é realizado para um período de 12 meses.}
 
 \item{par.CAGED}{Configurações usadas no projeto específico que implicam em filtros nos dados do CAGED.}

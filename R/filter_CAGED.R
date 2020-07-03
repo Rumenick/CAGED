@@ -1,9 +1,9 @@
 #' @title Criar período de competências declaradas para filtrar na tabela CAGED
 #' @noRd
-select_period_CAGED <- function(data.ref, n.ref) {
-  format.Date(seq(from = as.Date(paste("01", data.ref, sep = "/"), format = "%d/%m/%Y"), 
+select_period_CAGED <- function(data.ref.coleta, n.ref.coleta) {
+  format.Date(seq(from = as.Date(paste("01", data.ref.coleta, sep = "/"), format = "%d/%m/%Y"), 
                   by = "-1 month", 
-                  length.out = n.ref), 
+                  length.out = n.ref.coleta), 
               format = "%Y%m")
 }
 
@@ -37,9 +37,9 @@ query_DeProjParaCBO <- function(par.DeProjParaCBO = list()) {
 #' 
 #' @param conn Objeto DBIConnection produzido por DBI::dbConnect().
 #' 
-#' @param data.ref Data de referência do projeto.
+#' @param data.ref.coleta Data de referência do projeto.
 #' 
-#' @param n.ref Números de meses do CAGED a serem filtrados em relação a \code{data_ref}. Usada para filtrar
+#' @param n.ref.coleta Números de meses do CAGED a serem filtrados em relação a \code{data_ref}. Usada para filtrar
 #' os dados do CAGED, por padrão o filtro é realizado para um período de 12 meses.
 #' 
 #' @param par.CAGED Configurações usadas no projeto específico que implicam em filtros nos dados do CAGED.
@@ -81,9 +81,9 @@ query_DeProjParaCBO <- function(par.DeProjParaCBO = list()) {
 #' @import dplyr
 #' @importFrom stats na.omit
 #' @export
-filter_CAGED <- function(conn, data.ref = "10/2019", n.ref = 12, par.CAGED = list()) {
+filter_CAGED <- function(conn, data.ref.coleta, n.ref.coleta, par.CAGED = list()) {
   # Selecionado o período de tempo:
-  par.CAGED$comp_declarada <- select_period_CAGED(data.ref, n.ref)
+  par.CAGED$comp_declarada <- select_period_CAGED(data.ref.coleta, n.ref.coleta)
   
   # Consultando dados das CBO's na tabela CAGED:
   dt_filter <-
