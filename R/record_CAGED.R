@@ -95,7 +95,7 @@ select_vars_CAGED <- function(.data) {
 #' \item{cod_cnae }{
 #' CNAE 2.0 Classe;
 #' }
-#' \item{porte_emprasa }{
+#' \item{porte_empresa }{
 #' Faixa Empr Início Jan;
 #' }
 #' \item{escolaridade }{

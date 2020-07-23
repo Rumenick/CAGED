@@ -39,7 +39,7 @@ CBO 2002 Ocupação
 \item{cod_cnae }{
 CNAE 2.0 Classe;
 }
-\item{porte_emprasa }{
+\item{porte_empresa }{
 Faixa Empr Início Jan;
 }
 \item{escolaridade }{

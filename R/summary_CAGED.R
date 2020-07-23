@@ -139,9 +139,9 @@ summary_CAGED <- function(conn, proj, data.ref.geral, data.ref.coleta, n.ref.col
   # Lendo o DeProjParaCBO em formado de trabalho:
   df_DeProjParaCBO <- 
     conn %>% 
-    tbl("DeProjParaCBO") %>%
-    filter(projeto == proj, data_ref_geral == data.ref.geral) %>% 
-    collect()
+    dplyr::tbl("DeProjParaCBO") %>%
+    dplyr::filter(projeto == proj, data_ref_geral == data.ref.geral) %>% 
+    dplyr::collect()
   
   # Consultando CBO's do respectivo projeto (proj) na tabela DeProjParaCBO:
   par.CAGED$cod_cbo <- unique(strsplit(paste(df_DeProjParaCBO$cod_cbo, collapse = ", "), ", ")[[1]])
@@ -161,7 +161,7 @@ summary_CAGED <- function(conn, proj, data.ref.geral, data.ref.coleta, n.ref.col
                                    FUN = function(df_cliente, CAGED) {CAGED %>% dplyr::filter(cod_cbo %in% strsplit(df_cliente$cod_cbo, ", ")[[1]]) %>% calc_means(crits = list(cut = df_cliente$crit_corte_percentil, spatial = df_cliente$crit_espacial, calculus = df_cliente$crit_calc))}, 
                                    CAGED = df_proj)) %>% 
     tidyr::unnest(cols = c(data, summary)) %>% 
-    dplyr::mutate(mean = ifelse(unidade == "h", as.numeric(calc_fator) * mean, mean))
+    dplyr::mutate(mean = ifelse(unidade == "h", as.numeric(calc_fator) * mean / 220, as.numeric(calc_fator)  * mean))
 }
 
 # Faltar aplicar fator (obs.: fator 220)
