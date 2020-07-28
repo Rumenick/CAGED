@@ -1,4 +1,4 @@
-#' @title Converte o DePara antigo para o novo formato, de modo que seja um código de cliente por linha
+#' @title Converte o DePara antigo para o novo formato, de modo que seja um código do cliente por linha
 #' 
 #' @noRd
 collapse_DeProjParaCBO <- function(DePara) {
@@ -14,7 +14,7 @@ collapse_DeProjParaCBO <- function(DePara) {
               sec_cnae = ifelse(cnae == "-", NA, as.character(cnae)),
               crit_corte_percentil = ifelse(criterio_2 %in% c("mean", "-"), NA, criterio_2),
               crit_espacial = sapply(strsplit(x = criterio, split = "media_da_"), function(x) {x[2]}),
-              crit_calc = "media",
+              crit_calc = "Média",
               calc_fator = as.numeric(fator), 
               calc_tipo = as.numeric(tipo_calculo),
               data_ref_geral = gsub(pattern = "_", replacement = "/", x = referencia)) %>% 

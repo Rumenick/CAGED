@@ -66,16 +66,16 @@ Sexo;
 \item{tempo_emprego }{
 Tempo Emprego;
 }
-\item{tipo_mov_desagregado }{
+\item{tipo_mov }{
 Tipo Mov Desagregado;
 }
 \item{cod_uf }{
 UF;
 }
-\item{ind_trab_parcial }{
+\item{ind_contrato_parcial }{
 Ind Trab Parcial;
 }
-\item{ind_trab_intermitente }{
+\item{ind_contrato_intermitente }{
 Ind Trab Intermitente.
 } 
 

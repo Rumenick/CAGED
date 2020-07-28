@@ -31,7 +31,7 @@ select_vars_CAGED <- function(.data) {
       tempo_emprego = "Tempo Emprego",         
       "Tipo Estab",            
       "Tipo Defic",            
-      tipo_mov_desagregado = "Tipo Mov Desagregado",  
+      tipo_mov = "Tipo Mov Desagregado",  
       cod_uf = "UF",                   
       "Bairros SP",            
       "Bairros Fortaleza",     
@@ -49,8 +49,8 @@ select_vars_CAGED <- function(.data) {
       "Região Senai PR",
       "Região Senai SP",    
       "Sub-Região Senai PR",
-      ind_trab_parcial = "Ind Trab Parcial",
-      ind_trab_intermitente = "Ind Trab Intermitente")
+      ind_contrato_parcial = "Ind Trab Parcial",
+      ind_contrato_intermitente = "Ind Trab Intermitente")
   
   vars_aux1 <- vars[vars %in% names(.data) & names(vars) != ""]
   vars_aux2 <- vars[!(vars %in% names(.data)) & names(vars) != ""]
@@ -122,16 +122,16 @@ select_vars_CAGED <- function(.data) {
 #' \item{tempo_emprego }{
 #' Tempo Emprego;
 #' }
-#' \item{tipo_mov_desagregado }{
+#' \item{tipo_mov }{
 #' Tipo Mov Desagregado;
 #' }
 #' \item{cod_uf }{
 #' UF;
 #' }
-#' \item{ind_trab_parcial }{
+#' \item{ind_contrato_parcial }{
 #' Ind Trab Parcial;
 #' }
-#' \item{ind_trab_intermitente }{
+#' \item{ind_contrato_intermitente }{
 #' Ind Trab Intermitente.
 #' } 
 #' 
