@@ -10,7 +10,12 @@ select_period_CAGED <- function(data.ref.coleta, n.ref.coleta) {
 #' @title Query de filtro na tabela CAGED
 #' @noRd
 query_CAGED <- function(par.CAGED = list()) {
-  query <- "SELECT * FROM CAGED WHERE "
+  query <- paste0("SELECT * FROM CAGED WHERE comp_declarada IN (", paste(par.CAGED$comp_declarada, collapse = ", "), ") AND ",
+                  "cod_cbo IN(", paste0(par.CAGED$cod_cbo, collapse = ", ") ,") AND ")
+  
+  par.CAGED[["comp_declarada"]] <- NULL
+  par.CAGED[["cod_cbo"]] <- NULL
+  
   for (i in 1:(length(par.CAGED))) {
     query <- paste0(query, names(par.CAGED)[i], " IN (", paste(par.CAGED[[i]], collapse = ', '), ifelse(i < length(par.CAGED), ") AND ", ")"), collapse = "")
   }
@@ -23,7 +28,7 @@ query_CAGED <- function(par.CAGED = list()) {
 query_DeProjParaCBO <- function(par.DeProjParaCBO = list()) {
   query <- "SELECT * FROM DeProjParaCBO WHERE "
   for (i in 1:(length(par.DeProjParaCBO))) {
-    query <- paste0(query, names(par.DeProjParaCBO)[i], " IN (", paste("'",par.DeProjParaCBO[[i]], "'", collapse = ", ", sep = ""), ifelse(i < length(par.DeProjParaCBO), ") AND ", ")"), collapse = "")
+    query <- paste0(query, names(par.DeProjParaCBO)[i], " IN (", paste("'", par.DeProjParaCBO[[i]], "'", collapse = ", ", sep = ""), ifelse(i < length(par.DeProjParaCBO), ") AND ", ")"), collapse = "")
   }
   return(query)
 }

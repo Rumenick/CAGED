@@ -177,6 +177,7 @@ record_CAGEG <- function(last.m = "01", last.y = "2007", dir.SQLite = "./", name
   # Gravando no BD os dados disponíveis:
   check_files %>% 
     dplyr::filter(available) %>%
+    #arrange(desc(as.numeric(paste0(year,".", month)))) %>% 
     {
       for (y in unique(.[["year"]])) {
         for(m in unique(.[["month"]])) {
