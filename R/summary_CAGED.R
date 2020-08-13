@@ -150,8 +150,8 @@ summary_CAGED <- function(conn, proj, data.ref.geral, data.ref.coleta, n.ref.col
   df_proj <- 
     conn %>% 
     filter_CAGED(data.ref.coleta, n.ref.coleta, par.CAGED) %>% 
-    dplyr::select(cod_cbo, salario_mensal, cod_uf) %>% 
-    dplyr::collect()
+    dplyr::select(cod_cbo, salario_mensal, cod_uf) #%>% 
+   # dplyr::collect()
   
   # Obtendo salários médios por UF e critérios:
   df_DeProjParaCBO %>% 

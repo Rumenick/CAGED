@@ -91,9 +91,9 @@ filter_CAGED <- function(conn, data.ref.coleta, n.ref.coleta, par.CAGED = list()
   par.CAGED$comp_declarada <- select_period_CAGED(data.ref.coleta, n.ref.coleta)
   
   # Consultando dados das CBO's na tabela CAGED:
-  dt_filter <-
-    conn %>% 
-    dplyr::tbl(dplyr::sql(query_CAGED(par.CAGED)))
+  dt_filter <- DBI::dbGetQuery(conn, query_CAGED(par.CAGED))
+    # conn %>% 
+    # dplyr::tbl(dplyr::sql(query_CAGED(par.CAGED)))
   # return (use collect(dt_filter_proj))
   return(dt_filter)
 }
