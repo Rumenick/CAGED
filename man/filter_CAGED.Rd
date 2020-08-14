@@ -27,7 +27,7 @@ CAGEG (par_CAGED) estabelecidos pela SIMG para um determinado projeto.
 \examples{
  
 
-# Ex.: SICRO seção f
+# Ex.: SICRO seÃ§Ã£o f
 par_CAGED <- list(admitidos = c("1", "2"),
                    cor = c("1", "2", "4", "6", "8", "9"),
                  qtd_horas_contrat = 44,
@@ -51,7 +51,7 @@ par_CAGED <- list(admitidos = c("1", "2"),
 
 # con <- DBI::dbConnect(RSQLite::SQLite(), "/home/rumenick/Documentos/data/MDO.sqlite")
 # SICRO_sec_f <- filter_CAGED(data.ref = "10/2019", n.ref = 12, par.CAGED = par_CAGED, conn = con)
-# dplyr::collect(SICRO_sec_f) # Carregar dados na memória.
+# dplyr::collect(SICRO_sec_f) # Carregar dados na memÃ³ria.
 
 
 }

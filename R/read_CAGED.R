@@ -115,6 +115,10 @@ available_update_CAGED <- function(last.m = "01", last.y = "2007") {
 #' 
 #' # Execute:
 #' check_files <- available_update_CAGED()
+#' repository_update_CAGED(check_files)
+#' 
+#' # Ou
+#' 
 #' repository_update_CAGED()
 #' 
 #' @import dplyr
@@ -141,7 +145,8 @@ repository_update_CAGED <- function(check_files = NULL) {
                                         FUN = function(x) {dplyr::tibble("file_name" = x[17], 
                                                                          "date_update" = as.character(as.Date(x[1], tryFormats = c("%m-%d-%y"))))}) %>% 
                                  dplyr::bind_rows() %>% 
-                                 dplyr::mutate("file_url" = paste0(path_url[i], `file_name`),
+                                 dplyr::mutate("file_url" = gsub(pattern = "\r", replacement = "", x = paste0(path_url[i], `file_name`)),
+                                               `file_name` = gsub(pattern = "\r", replacement = "", x = `file_name`),
                                                "date_check" = as.character(Sys.Date())) %>% 
                                  dplyr::select(`file_url`, `file_name`, `date_update`, `date_check`))
                    
@@ -150,6 +155,13 @@ repository_update_CAGED <- function(check_files = NULL) {
                }, 
              error = function(e) {stop("'ftp://ftp.mtps.gov.br/pdet/microdados/CAGED/' INDISPONÍVEl")}, 
              finally = TRUE)
+  
+  metadata <-
+    metadata %>% 
+    dplyr::mutate(check = gsub(pattern = "CAGEDEST_|.7z", replacement = "", x = file_name)) %>% 
+    dplyr::filter(check %in% paste0(check_files$month[check_files$available], check_files$year[check_files$available])) %>% 
+    dplyr::select(-check)
+  
   return(metadata)
 }
 

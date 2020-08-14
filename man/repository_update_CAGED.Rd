@@ -34,6 +34,10 @@ do repositório.
 
 # Execute:
 check_files <- available_update_CAGED()
+repository_update_CAGED(check_files)
+
+# Ou
+
 repository_update_CAGED()
 
 }
