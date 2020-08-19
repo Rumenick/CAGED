@@ -29,7 +29,7 @@ desempregados.
 }
 \examples{
 
-## Baixa dados do mÃªs de fevereiro de 2018
+## Baixa dados do mês de fevereiro de 2018
 CAGEDEST_022018 <- read_CAGED(month = "02", year = "2018")
 head(CAGEDEST_022018)
 

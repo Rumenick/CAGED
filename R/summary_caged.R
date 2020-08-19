@@ -108,6 +108,23 @@ fun_summary <- function(x, type) {
          "n" = length(x))
 }
 
+piso_por_valor <- function (.data, df.par.convencoes.piso.por.valor, cod.cliente, 
+                            corte.piso) 
+{
+  print(cod.cliente)
+  if (corte.piso != 2L) {
+    dplyr::left_join(x = .data, 
+                     y = dplyr::filter(df.par.convencoes.piso.por.valor, 
+                                       cod_cliente == cod.cliente), 
+                     by = c("cod_uf", "cod_cbo")) %>% 
+      dplyr::filter(salario_mensal_com_reajuste >= piso_valor) %>% 
+      dplyr::select(-piso_valor)
+  }
+  else {
+    .data
+  }
+}
+
 #' @title Função com todas as opções de cálculo para média salarial por código do cliente
 #' 
 #' @description Facilmente pode-se adicionar outros critérios com a evolução dos projetos.
@@ -127,10 +144,10 @@ calc_means <- function(.data, crits = list(cut = NULL, spatial = NULL, calculus 
     } else {
       if(percentile <= .5) {
         .data %>% 
-          filter(salario_mensal <= quantile(salario_mensal, probs = percentile, type = 2))
+          filter(salario_mensal_com_reajuste <= quantile(salario_mensal_com_reajuste, probs = percentile, type = 2))
       } else {
         .data %>% 
-          filter(salario_mensal >= quantile(salario_mensal, probs = percentile, type = 2))
+          filter(salario_mensal_com_reajuste >= quantile(salario_mensal_com_reajuste, probs = percentile, type = 2))
       }
     }
   
@@ -138,7 +155,7 @@ calc_means <- function(.data, crits = list(cut = NULL, spatial = NULL, calculus 
     {
       if(ind_uf) { # Estatística por UF
         group_by(.data = ., cod_uf) %>% 
-          summarise(mean = fun_summary(salario_mensal, type = crits$calculus))
+          summarise(mean = fun_summary(x = salario_mensal_com_reajuste, type = crits$calculus))
       } else {
         if(ind_reg) { 
           # Estatística por região:
@@ -148,12 +165,14 @@ calc_means <- function(.data, crits = list(cut = NULL, spatial = NULL, calculus 
                                                              cod_uf >= 41 & cod_uf <= 43 ~ "Sul",
                                                              cod_uf >= 50 & cod_uf <= 53 ~ "Centro-oeste")) %>% 
             dplyr::group_by(reg_uf) %>%
-            dplyr::summarise(mean = mean(salario_mensal)) %>% 
-            dplyr::left_join(x = info_ufs[, c("cod_uf", "sigla_uf", "reg_uf")], y = ., by = "reg_uf") %>% 
+            dplyr::summarise(mean = fun_summary(x = salario_mensal_com_reajuste, type = crits$calculus)) %>% 
+            dplyr::left_join(x = CAGED::info_ufs[, c("cod_uf", "sigla_uf", "reg_uf")], y = ., by = "reg_uf") %>% 
             dplyr::transmute(mean = mean, cod_uf = cod_uf)
         } else { 
           # Estatística Nacional:
-          dplyr::summarise(.data = ., mean = mean(salario_mensal), cod_uf = info_ufs$cod_uf)
+          dplyr::summarise(.data = ., 
+                           mean = fun_summary(x = salario_mensal_com_reajuste, type = crits$calculus), 
+                           cod_uf = CAGED::info_ufs$cod_uf)
         }
       }
     }
@@ -317,64 +336,6 @@ summary_caged <- function(conn.caged, conn.auxiliar, proj, data.ref.geral) {
     dplyr::collect() %>% 
     dplyr::filter(cod_cliente %in% de_proj_para_cbo$cod_cliente)
   
-  if (nrow(par_convencoes_piso_por_fator) > 0) {
-    caged <-
-      caged %>%
-      {
-        .$ind_piso_por_fator <- 0
-        for (i in 1:nrow(par_convencoes_piso_por_fator)) {
-          .$ind_piso_por_fator <- .$ind_piso_por_fator + 
-            ifelse((((.$cod_cbo %in% str_split_caged(de_proj_para_cbo$cod_cbo[par_convencoes_piso_por_fator$cod_cliente[i] == de_proj_para_cbo$cod_cliente])) & 
-                       (.$comp_declarada %in% comp_declarada_ano_atual) & 
-                       (.$salario_mensal_com_reajuste < salario_minimo_atual * as.numeric(par_convencoes_piso_por_fator$piso_fator[i]))) |
-                      ((.$cod_cbo %in% str_split_caged(de_proj_para_cbo$cod_cbo[par_convencoes_piso_por_fator$cod_cliente[i] == de_proj_para_cbo$cod_cliente])) & 
-                         (.$comp_declarada %in% comp_declarada_ano_anterior) & 
-                         (.$salario_mensal_com_reajuste < salario_minimo_anterior * as.numeric(par_convencoes_piso_por_fator$piso_fator[i])))), 
-                   1, 0)
-        }
-        .
-      } %>% 
-      dplyr::filter(ind_piso_por_fator == 0L) %>% 
-      select(-ind_piso_por_fator)
-  }
-  
-  # Realizando os filtros baseados no piso por valor das categorias:
-  # Obs.: Casos que corte de piso é antes do cálculo da média ou antes e após a este cálculo.
-  if (metadados_projeto$corte_piso != 2L) {
-    par_convencoes_piso_por_valor <- 
-      conn.auxiliar %>% 
-      dplyr::tbl("ParConvencoesPisoPorValor") %>% 
-      dplyr::filter(projeto == proj, 
-                    data_ref_geral == data.ref.geral) %>% 
-      dplyr::collect() %>% 
-      dplyr::select(-projeto, -data_ref_geral) %>% 
-      dplyr::right_join(x = ., 
-                        y = de_proj_para_cbo, by = "cod_cliente") %>% 
-      dplyr::select(cod_uf, cod_cliente, unidade, cod_cbo, piso_valor) %>% 
-      dplyr::mutate(piso_valor = as.numeric(piso_valor),
-                    piso_valor = if_else(unidade == "h", piso_valor * 220, piso_valor)) %>% 
-      dplyr::select(-unidade)
-    
-    if (nrow(par_convencoes_piso_por_valor) > 0) {
-      caged <-
-        caged %>%
-        {
-          .$ind_piso_por_valor <- 0
-          for (i in 1:nrow(par_convencoes_piso_por_valor)) {
-            print(i)
-            .$ind_piso_por_valor <- .$ind_piso_por_valor + 
-              ifelse(((.$cod_cbo %in% str_split_caged(par_convencoes_piso_por_valor$cod_cbo[i])) & 
-                         (.$cod_uf == par_convencoes_piso_por_valor$cod_uf[i]) & 
-                         (.$salario_mensal_com_reajuste < par_convencoes_piso_por_valor$piso_valor[i])), 
-                      1, 0)
-          }
-          .
-        } # %>% 
-      # dplyr::filter(ind_piso_por_valor == 0L) %>% 
-      # select(-ind_piso_por_fator)
-    }
-  }
-  
   
   # Check
   # caged %>%
@@ -382,21 +343,44 @@ summary_caged <- function(conn.caged, conn.auxiliar, proj, data.ref.geral) {
   #   group_by(cod_cbo) %>%
   #   summarise(min = min(salario_mensal_com_reajuste), max = max(salario_mensal_com_reajuste))
   
+  par_convencoes_piso_por_valor <- 
+    conn.auxiliar %>% 
+    dplyr::tbl("ParConvencoesPisoPorValor") %>% 
+    dplyr::filter(projeto == proj, 
+                  data_ref_geral == data.ref.geral) %>% 
+    dplyr::collect() %>% 
+    dplyr::select(-projeto, -data_ref_geral) %>% 
+    dplyr::right_join(x = ., 
+                      y = de_proj_para_cbo, by = "cod_cliente") %>% 
+    dplyr::select(cod_uf, cod_cliente, unidade, cod_cbo, piso_valor) %>% 
+    dplyr::mutate(piso_valor = as.numeric(piso_valor),
+                  piso_valor = if_else(unidade == "h", piso_valor * 220, piso_valor),
+                  cod_uf  = as.integer(cod_uf)) %>% 
+    dplyr::select(-unidade) %>% 
+    tidyr::separate_rows(cod_cbo, convert = TRUE)
+  
   # Obtendo salários médios por UF e critérios:
   de_proj_para_cbo %>% 
+    mutate(cod_cliente_aux = cod_cliente) %>% 
     dplyr::group_by(cod_cliente) %>%
     tidyr::nest() %>% 
-    dplyr::mutate(summary = lapply(data, 
-                                   FUN = function(df.cliente, df.caged) { 
-                                     df.caged %>% 
-                                       dplyr::filter(cod_cbo %in% str_split_caged(df.cliente$cod_cbo)) %>% 
-                                       calc_means(crits = list(cut = df.cliente$crit_corte_percentil, 
-                                                               spatial = df.cliente$crit_espacial, 
-                                                               calculus = df.cliente$crit_calc))
-                                   }, 
-                                   df.caged = caged)) %>% 
+    dplyr::mutate(summary = lapply(data, FUN = function(df.cliente, 
+                                                        df.caged, 
+                                                        df.par.convencoes.piso.por.valor) { 
+      df.caged %>% 
+        dplyr::filter(cod_cbo %in% str_split_caged(df.cliente$cod_cbo)) %>%
+        piso_por_valor(df.par.convencoes.piso.por.valor, 
+                       cod.cliente = df.cliente$cod_cliente_aux,
+                       corte.piso = metadados_projeto$corte_piso) %>%
+        calc_means(crits = list(cut = df.cliente$crit_corte_percentil,
+                                spatial = df.cliente$crit_espacial,
+                                calculus = df.cliente$crit_calc))
+    }, 
+    df.caged = caged,
+    df.par.convencoes.piso.por.valor = par_convencoes_piso_por_valor)) %>% 
     tidyr::unnest(cols = c(data, summary)) %>% 
-    dplyr::mutate(mean = ifelse(unidade == "h", as.numeric(calc_fator) * mean / 220, as.numeric(calc_fator)  * mean))
+    dplyr::mutate(mean = ifelse(unidade == "h", as.numeric(calc_fator) * mean, as.numeric(calc_fator)  * mean)) %>% 
+    ungroup()
 }
 
 # Faltar aplicar fator (obs.: fator 220)
@@ -404,6 +388,11 @@ summary_caged <- function(conn.caged, conn.auxiliar, proj, data.ref.geral) {
 
 # conn.caged = DBI::dbConnect(RSQLite::SQLite(), "/home/rumenick/Documentos/MDO.sqlite")
 # conn.auxiliar = DBI::dbConnect(RSQLite::SQLite(), "/home/rumenick/Documentos/MDODadosAuxiliares.sqlite")
+# proj = "SICRO_secao_f"
+# data.ref.geral = "01/2020"
+
+# conn.caged = DBI::dbConnect(RSQLite::SQLite(), "C:/Users/rumen/Documents/MDO.sqlite")
+# conn.auxiliar = DBI::dbConnect(RSQLite::SQLite(), "C:/Users/rumen/Documents/MDODadosAuxiliares.sqlite")
 # proj = "SICRO_secao_f"
 # data.ref.geral = "01/2020"
 

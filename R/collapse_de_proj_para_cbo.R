@@ -16,6 +16,7 @@ collapse_DeProjParaCBO <- function(DePara) {
                      crit_espacial = sapply(strsplit(x = criterio, split = "media_da_"), function(x) {x[2]}),
                      crit_calc = "Média",
                      calc_fator = as.numeric(fator), 
+                     calc_fator = ifelse(calc_fator == 220L | (abs(calc_fator - (1/220)) < 0.0000000001), 1, calc_fator),
                      calc_tipo = as.numeric(tipo_calculo),
                      data_ref_geral = gsub(pattern = "_", replacement = "/", x = referencia)) %>% 
     {
