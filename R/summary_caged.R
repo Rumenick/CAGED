@@ -379,7 +379,7 @@ summary_caged <- function(conn.caged, conn.auxiliar, proj, data.ref.geral) {
     df.caged = caged,
     df.par.convencoes.piso.por.valor = par_convencoes_piso_por_valor)) %>% 
     tidyr::unnest(cols = c(data, summary)) %>% 
-    dplyr::mutate(mean = ifelse(unidade == "h", as.numeric(calc_fator) * mean, as.numeric(calc_fator)  * mean)) %>% 
+    dplyr::mutate(mean = ifelse(unidade == "h", as.numeric(calc_fator) * mean / 220, as.numeric(calc_fator)  * mean)) %>% 
     ungroup()
 }
 
