@@ -100,18 +100,9 @@ filter_caged <- function(conn, par.caged = list()) {
   return(dt_filter)
 }
 
-fun_summary <- function(x, type) {
-  switch(type,
-         "Média" = mean(x),
-         "Mediana" = median(x),
-         "Desvio Padrão" = sd(x),
-         "n" = length(x))
-}
-
 piso_por_valor <- function (.data, df.par.convencoes.piso.por.valor, cod.cliente, 
                             corte.piso) 
 {
-  print(cod.cliente)
   if (corte.piso != 2L) {
     dplyr::left_join(x = .data, 
                      y = dplyr::filter(df.par.convencoes.piso.por.valor, 
@@ -125,6 +116,33 @@ piso_por_valor <- function (.data, df.par.convencoes.piso.por.valor, cod.cliente
   }
 }
 
+corte_de_pontos_extremos_superiores <- function(.data, ind.desvio.padrao, ndesvio.padrao) {
+  if (ind.desvio.padrao) {
+    .data %>% 
+      dplyr::filter(salario_mensal_com_reajuste <= (mean(salario_mensal_com_reajuste) + ndesvio.padrao * sd(salario_mensal_com_reajuste)))
+  }
+  else {
+    .data
+  }
+}
+
+adicionar_proporcionalidade <- function(.data, ind.proporcionalidade) {
+  if (ind.proporcionalidade) {
+    .data %>% 
+      dplyr::mutate(salario_mensal_com_reajuste = salario_mensal_com_reajuste / qtd_horas_contrat * 40)
+  } else {
+    .data
+  }
+}
+
+fun_summary <- function(x, type) {
+  switch(type,
+         "Média" = mean(x),
+         "Mediana" = median(x),
+         "Desvio Padrão" = sd(x),
+         "n" = length(x))
+}
+
 #' @title Função com todas as opções de cálculo para média salarial por código do cliente
 #' 
 #' @description Facilmente pode-se adicionar outros critérios com a evolução dos projetos.
@@ -132,11 +150,17 @@ piso_por_valor <- function (.data, df.par.convencoes.piso.por.valor, cod.cliente
 #' 
 #' @noRd
 #' 
-calc_means <- function(.data, crits = list(cut = NULL, spatial = NULL, calculus = NULL)) {
+calc_ests <- function(.data, crits = list(cut = NULL, spatial = NULL, calculus = NULL)) {
   
   ind_reg <- grepl("reg", tolower(crits$spatial)) # Verificar se média por região
   ind_uf <-  grepl("uf", tolower(crits$spatial)) # Verificar se média por UF
-  percentile <- as.numeric(gsub("p", "", crits$cut)) / 100 # Obtendo o percentil
+  percentile <- as.numeric(gsub("p", "", tolower(crits$cut))) / 100 # Obtendo o percentil
+  
+  fator_infraestrutura <-
+    .data %>%
+    dplyr::summarise(fator_infraestrutura = mean(salario_mensal_com_reajuste[cod_cnae %in% c(42111, 42120)]) /  mean(salario_mensal_com_reajuste)) %>%
+    dplyr::mutate(fator_infraestrutura = ifelse(fator_infraestrutura < 1, 1, fator_infraestrutura)) %>% 
+    unlist()
   
   .data <- 
     if (is.na(percentile)) {
@@ -154,25 +178,101 @@ calc_means <- function(.data, crits = list(cut = NULL, spatial = NULL, calculus 
   .data %>% 
     {
       if(ind_uf) { # Estatística por UF
-        group_by(.data = ., cod_uf) %>% 
-          summarise(mean = fun_summary(x = salario_mensal_com_reajuste, type = crits$calculus))
+        dplyr::group_by(.data = ., cod_uf) %>% 
+          dplyr::summarise(est = fun_summary(x = salario_mensal_com_reajuste, type = crits$calculus), 
+                           ntotal = n(),
+                           nhomens =  sum(sexo == 1L),
+                           nmulheres = sum(sexo == 2L),
+                           per_homens = nhomens / ntotal,
+                           per_mulheres = nmulheres / ntotal,
+                           per_homens_fertil = sum(dplyr::between(idade, 16L, 49L) & sexo == 1L) / nhomens, 
+                           per_mulheres_fertil = sum(dplyr::between(idade, 16L, 49L) & sexo == 2L) / nmulheres,
+                           media_tempo_emprego = mean(tempo_emprego[tempo_emprego > 3L & admitidos == 2L]),
+                           ndemissao = sum(admitidos == 2L),
+                           ndsj = sum(tipo_mov == 4L & admitidos == 2L),
+                           ndjc = sum(tipo_mov == 5L & admitidos == 2L),
+                           per_dsj = ndsj / ndemissao,
+                           per_djc = ndjc / ndemissao,
+                           fator_infraestrutura = fator_infraestrutura) %>% 
+          dplyr::select(est, 
+                        cod_uf, 
+                        per_homens, 
+                        per_mulheres, 
+                        per_homens_fertil, 
+                        per_mulheres_fertil,
+                        media_tempo_emprego,
+                        per_dsj,
+                        per_djc,
+                        ndsj,
+                        ndjc,
+                        ndemissao, 
+                        fator_infraestrutura)
+        
       } else {
         if(ind_reg) { 
           # Estatística por região:
-          dplyr::mutate(.data = ., reg_uf = dplyr::case_when(cod_uf >= 11 & cod_uf <= 17 ~ "Norte",
-                                                             cod_uf >= 21 & cod_uf <= 29 ~ "Nordeste",
-                                                             cod_uf >= 31 & cod_uf <= 35 ~ "Sudeste",
-                                                             cod_uf >= 41 & cod_uf <= 43 ~ "Sul",
-                                                             cod_uf >= 50 & cod_uf <= 53 ~ "Centro-oeste")) %>% 
-            dplyr::group_by(reg_uf) %>%
-            dplyr::summarise(mean = fun_summary(x = salario_mensal_com_reajuste, type = crits$calculus)) %>% 
+          dplyr::group_by(.data, reg_uf) %>%
+            dplyr::summarise(est = fun_summary(x = salario_mensal_com_reajuste, type = crits$calculus),
+                             ntotal = n(),
+                             nhomens =  sum(sexo == 1L),
+                             nmulheres = sum(sexo == 2L),
+                             per_homens = nhomens / ntotal,
+                             per_mulheres = nmulheres / ntotal,
+                             per_homens_fertil = sum(dplyr::between(idade, 16L, 49L) & sexo == 1L) / nhomens, 
+                             per_mulheres_fertil = sum(dplyr::between(idade, 16L, 49L) & sexo == 2L) / nmulheres,
+                             media_tempo_emprego = mean(tempo_emprego[tempo_emprego > 3L & admitidos == 2L]),
+                             ndemissao = sum(admitidos == 2L),
+                             ndsj = sum(tipo_mov == 4L & admitidos == 2L),
+                             ndjc = sum(tipo_mov == 5L & admitidos == 2L),
+                             per_dsj = ndsj / ndemissao,
+                             per_djc = ndjc / ndemissao, 
+                             fator_infraestrutura = fator_infraestrutura) %>% 
             dplyr::left_join(x = CAGED::info_ufs[, c("cod_uf", "sigla_uf", "reg_uf")], y = ., by = "reg_uf") %>% 
-            dplyr::transmute(mean = mean, cod_uf = cod_uf)
+            dplyr::select(est, 
+                          cod_uf, 
+                          per_homens, 
+                          per_mulheres, 
+                          per_homens_fertil, 
+                          per_mulheres_fertil,
+                          media_tempo_emprego,
+                          per_dsj,
+                          per_djc,
+                          ndsj,
+                          ndjc,
+                          ndemissao,
+                          fator_infraestrutura)
         } else { 
           # Estatística Nacional:
           dplyr::summarise(.data = ., 
-                           mean = fun_summary(x = salario_mensal_com_reajuste, type = crits$calculus), 
-                           cod_uf = CAGED::info_ufs$cod_uf)
+                           est = fun_summary(x = salario_mensal_com_reajuste, type = crits$calculus), 
+                           cod_uf = CAGED::info_ufs$cod_uf,
+                           ntotal = n(),
+                           nhomens =  sum(sexo == 1L),
+                           nmulheres = sum(sexo == 2L),
+                           per_homens = nhomens / ntotal,
+                           per_mulheres = nmulheres / ntotal,
+                           per_homens_fertil = sum(dplyr::between(idade, 16L, 49L) & sexo == 1L) / nhomens, 
+                           per_mulheres_fertil = sum(dplyr::between(idade, 16L, 49L) & sexo == 2L) / nmulheres,
+                           media_tempo_emprego = mean(tempo_emprego[tempo_emprego > 3L & admitidos == 2L]),
+                           ndemissao = sum(admitidos == 2L),
+                           ndsj = sum(tipo_mov == 4L & admitidos == 2L),
+                           ndjc = sum(tipo_mov == 5L & admitidos == 2L),
+                           per_dsj = ndsj / ndemissao,
+                           per_djc = ndjc / ndemissao, 
+                           fator_infraestrutura = fator_infraestrutura) %>% 
+            dplyr::select(est, 
+                          cod_uf, 
+                          per_homens, 
+                          per_mulheres, 
+                          per_homens_fertil, 
+                          per_mulheres_fertil,
+                          media_tempo_emprego,
+                          per_dsj,
+                          per_djc,
+                          ndsj,
+                          ndjc,
+                          ndemissao, 
+                          fator_infraestrutura)
         }
       }
     }
@@ -253,7 +353,13 @@ summary_caged <- function(conn.caged, conn.auxiliar, proj, data.ref.geral) {
   # Filtrando a tabela CAGED para o projeto e data de referência selecionado:
   caged <- 
     conn.caged %>% 
-    filter_caged(par.caged = par_caged)
+    filter_caged(par.caged = par_caged) %>% 
+    dplyr::mutate(reg_uf = dplyr::case_when(cod_uf >= 11 & cod_uf <= 17 ~ "Norte",
+                                            cod_uf >= 21 & cod_uf <= 29 ~ "Nordeste",
+                                            cod_uf >= 31 & cod_uf <= 35 ~ "Sudeste",
+                                            cod_uf >= 41 & cod_uf <= 43 ~ "Sul",
+                                            cod_uf >= 50 & cod_uf <= 53 ~ "Centro-oeste")) 
+  
   
   # Filtrando a tabela CAGED de acordo com salário mínimo atual e anteriar:
   comp_declarada_ano_atual <-  par_caged$comp_declarada[grepl(pattern = strsplit(metadados_projeto$data_ref_coleta, "/")[[1]][2], par_caged$comp_declarada)]
@@ -336,6 +442,26 @@ summary_caged <- function(conn.caged, conn.auxiliar, proj, data.ref.geral) {
     dplyr::collect() %>% 
     dplyr::filter(cod_cliente %in% de_proj_para_cbo$cod_cliente)
   
+  if (nrow(par_convencoes_piso_por_fator) > 0) {
+    caged <-
+      caged %>%
+      {
+        .$ind_piso_por_fator <- 0
+        for (i in 1:nrow(par_convencoes_piso_por_fator)) {
+          .$ind_piso_por_fator <- .$ind_piso_por_fator + 
+            ifelse((((.$cod_cbo %in% str_split_caged(de_proj_para_cbo$cod_cbo[par_convencoes_piso_por_fator$cod_cliente[i] == de_proj_para_cbo$cod_cliente])) & 
+                       (.$comp_declarada %in% comp_declarada_ano_atual) & 
+                       (.$salario_mensal_com_reajuste < salario_minimo_atual * as.numeric(par_convencoes_piso_por_fator$piso_fator[i]))) |
+                      ((.$cod_cbo %in% str_split_caged(de_proj_para_cbo$cod_cbo[par_convencoes_piso_por_fator$cod_cliente[i] == de_proj_para_cbo$cod_cliente])) & 
+                         (.$comp_declarada %in% comp_declarada_ano_anterior) & 
+                         (.$salario_mensal_com_reajuste < salario_minimo_anterior * as.numeric(par_convencoes_piso_por_fator$piso_fator[i])))), 
+                   1, 0)
+        }
+        .
+      } %>% 
+      dplyr::filter(ind_piso_por_fator == 0L) %>% 
+      select(-ind_piso_por_fator)
+  }
   
   # Check
   # caged %>%
@@ -359,28 +485,47 @@ summary_caged <- function(conn.caged, conn.auxiliar, proj, data.ref.geral) {
     dplyr::select(-unidade) %>% 
     tidyr::separate_rows(cod_cbo, convert = TRUE)
   
+  
+  
   # Obtendo salários médios por UF e critérios:
   de_proj_para_cbo %>% 
-    mutate(cod_cliente_aux = cod_cliente) %>% 
-    dplyr::group_by(cod_cliente) %>%
-    tidyr::nest() %>% 
+    # dplyr::select(-crit_corte_percentil, -crit_espacial, -crit_calc) %>%
+    # dplyr::right_join(x = .,
+    #                   y =  expand.grid(cod_cliente = de_proj_para_cbo$cod_cliente[is.na(de_proj_para_cbo$cod_cliente_equivalente)],
+    #                                    crit_corte_percentil = c("P25", "P75", paste0("P", seq(10, 100, by = 10))),
+    #                                    crit_espacial = c("Regional", "UF", "Nacional"),
+    #                                    crit_calc = c("Média", "Desvio Padrão", "n"),
+    #                                    stringsAsFactors = F),
+    #                   by = "cod_cliente") %>%
+    # filter(crit_calc == "n") %>%
+    # head(n = 3) %>%
+    dplyr::group_by(cod_cliente_key = cod_cliente, 
+                    crit_corte_percentil_key = crit_corte_percentil,
+                    crit_espacial_key = crit_espacial,
+                    crit_calc_key = crit_calc) %>%
+    tidyr::nest() %>%
     dplyr::mutate(summary = lapply(data, FUN = function(df.cliente, 
                                                         df.caged, 
                                                         df.par.convencoes.piso.por.valor) { 
       df.caged %>% 
         dplyr::filter(cod_cbo %in% str_split_caged(df.cliente$cod_cbo)) %>%
         piso_por_valor(df.par.convencoes.piso.por.valor, 
-                       cod.cliente = df.cliente$cod_cliente_aux,
+                       cod.cliente = df.cliente$cod_cliente,
                        corte.piso = metadados_projeto$corte_piso) %>%
-        calc_means(crits = list(cut = df.cliente$crit_corte_percentil,
-                                spatial = df.cliente$crit_espacial,
-                                calculus = df.cliente$crit_calc))
+        corte_de_pontos_extremos_superiores(ind.desvio.padrao = metadados_projeto$ind_desvio_padrao,
+                                            ndesvio.padrao = metadados_projeto$ndesvio_padrao) %>% 
+        adicionar_proporcionalidade(ind.proporcionalidade = metadados_projeto$ind_proporcionalidade) %>% 
+        calc_ests(crits = list(cut = df.cliente$crit_corte_percentil,
+                               spatial = df.cliente$crit_espacial,
+                               calculus = df.cliente$crit_calc))
     }, 
     df.caged = caged,
     df.par.convencoes.piso.por.valor = par_convencoes_piso_por_valor)) %>% 
-    tidyr::unnest(cols = c(data, summary)) %>% 
-    dplyr::mutate(mean = ifelse(unidade == "h", as.numeric(calc_fator) * mean / 220, as.numeric(calc_fator)  * mean)) %>% 
-    ungroup()
+    tidyr::unnest(cols = c(data, summary))
+  
+  # %>% 
+  #   dplyr::mutate(mean = ifelse(unidade == "h", as.numeric(calc_fator) * mean / 220, as.numeric(calc_fator)  * mean)) %>% 
+  #   ungroup()
 }
 
 # Faltar aplicar fator (obs.: fator 220)
